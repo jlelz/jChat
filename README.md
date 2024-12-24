@@ -1,4 +1,4 @@
-# jChatFilter
+# jChat
 ## Warcraft chat mod, since 2019
 
 ## License
@@ -16,7 +16,7 @@ Interface > Addons UI
 UI works with Classic Era, Classic Wrath and Retail
 
 ## Issues
-https://github.com/jadissa/jChatFilter/issues
+https://github.com/jlelz/jChat/issues
 
 ## Screenshots
 <p float="center">
