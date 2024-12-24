@@ -9,7 +9,7 @@ local _, Addon = ...;
 Addon.ROSTER = CreateFrame( 'Frame' );
 Addon.ROSTER:RegisterEvent( 'ADDON_LOADED' );
 Addon.ROSTER:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChatFilter' ) then
+    if( AddonName == 'jChat' ) then
 
         local EventsFrame = CreateFrame( 'frame' );
         EventsFrame:RegisterEvent( 'CHANNEL_ROSTER_UPDATE' );

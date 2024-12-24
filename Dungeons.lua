@@ -3,7 +3,7 @@ local _, Addon = ...;
 Addon.DUNGEONS = CreateFrame( 'Frame' );
 Addon.DUNGEONS:RegisterEvent( 'ADDON_LOADED' );
 Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChatFilter' ) then
+    if( AddonName == 'jChat' ) then
 
         Addon.DUNGEONS.EXPIRE_TIME = 1800; -- 30 minutes in seconds
         Addon.DUNGEONS.PREFIX = 'JDUNGEON';

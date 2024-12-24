@@ -3,7 +3,7 @@ local _, Addon = ...;
 Addon.QUESTS = CreateFrame( 'Frame' );
 Addon.QUESTS:RegisterEvent( 'ADDON_LOADED' );
 Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChatFilter' ) then
+    if( AddonName == 'jChat' ) then
         --
         --  Accept Quest
         --

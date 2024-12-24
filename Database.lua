@@ -3,7 +3,7 @@ local _, Addon = ...;
 Addon.DB = CreateFrame( 'Frame' );
 Addon.DB:RegisterEvent( 'ADDON_LOADED' );
 Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChatFilter' ) then
+    if( AddonName == 'jChat' ) then
 
         --
         --  Get module defaults

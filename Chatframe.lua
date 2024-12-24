@@ -3,7 +3,7 @@ local _, Addon = ...;
 Addon.CHAT = CreateFrame( 'Frame' );
 Addon.CHAT:RegisterEvent( 'ADDON_LOADED' );
 Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChatFilter' ) then
+    if( AddonName == 'jChat' ) then
 
         --
         --  Set chat font
