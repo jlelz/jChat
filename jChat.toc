@@ -1,0 +1,44 @@
+## Title: |cff009bffj|cffffffffChatFilter|r
+## Notes: j's Chat Filter mod
+## Version: @project-version@
+## X-Category: system
+
+## Author: jlelz
+## X-Realm: Moonguard/Grobbulus/Whitemane
+## X-Curse-Project-ID: 949164
+## X-WoWI-ID: 26743
+## X-Wago-ID: QNlqea6e
+
+## DefaultState: enabled
+## SavedVariables: jChatFilter
+
+## Interface: 110007
+## Interface-Retail: 110005
+## Interface-Classic: 11505
+## Interface-BCC: 20504
+## Interface-Wrath: 30403
+## Interface-Cata: 40400
+
+#/run print((select(4, GetBuildInfo())));
+#https://markdownlivepreview.com/
+
+# Required libs
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceHook-3.0\AceHook-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\AceComm-3.0\AceComm-3.0.xml
+
+Libs\LibWindow-1.1\LibWindow-1.1.lua
+
+Libs\jUI\index.xml
+
+Index.xml
