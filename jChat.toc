@@ -1,4 +1,4 @@
-## Title: |cff009bffj|cffffffffChatFilter|r
+## Title: |cff009bffj|cffffffffChat|r
 ## Notes: j's Chat Filter mod
 ## Version: @project-version@
 ## X-Category: system
