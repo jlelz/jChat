@@ -10,7 +10,7 @@
 ## X-Wago-ID: QNlqea6e
 
 ## DefaultState: enabled
-## SavedVariables: jChatFilter
+## SavedVariables: jChat
 
 ## Interface: 110007
 ## Interface-Retail: 110005
