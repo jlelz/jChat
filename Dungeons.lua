@@ -10,6 +10,27 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.DUNGEONS.CHANNEL_NAME = 'jLFG';
         Addon.DUNGEONS.YourGroups = Addon.DUNGEONS.YourGroups or {};
 
+        Addon.DUNGEONS.IsLocked = function( self,Instance )
+            local NumSaved = GetNumSavedInstances();
+            NumSaved = tonumber( NumSaved );
+            if( not( NumSaved > 0 ) ) then
+                return false;
+            end
+
+            for i = 1,NumSaved do
+                local Name,Id,Reset,_,IsLocked,_,_,IsRaid,_,_,_,_ = GetSavedInstanceInfo( i );
+                if(  IsLocked ) then
+                    for _,ABBREV in pairs( Instance.Abbrevs ) do
+                        if( Addon:Minify( Name ):find( Addon:Minify( ABBREV ) ) ) then
+                            return true;
+                        end
+                    end
+                end
+            end
+
+            return false;
+        end
+
         Addon.DUNGEONS.SendMessage = function( self,Abbrev,ReqLevel,Roles,Queued )
             local Player = UnitName( 'player' );
             local Realm = GetRealmName();
@@ -732,6 +753,11 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                         Instances[ Key ].Name = Instances[ Key ].Name..','..Instances[ Key ].BestLevels[2];
                     end
                     Instances[ Key ].Name = Instances[ Key ].Name..']';
+
+                    Instances[ Key ].Locked = Addon.DUNGEONS:IsLocked( Instances[ Key ] );
+                    if( Instances[ Key ].Locked ) then
+                        Instances[ Key ].Name = Instances[ Key ].Name..CreateColor( unpack( {212/255,57/255,57/255,1} ) ):WrapTextInColorCode( '[LOCKED]' );
+                    end
 
                     -- Desc
                     Instances[ Key ].Description = Instances[ Key ].Description.."\rLevel Bracket: ["..Instances[ Key ].BestLevels[1];

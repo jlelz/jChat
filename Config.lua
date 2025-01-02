@@ -286,6 +286,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     },
                 };
                 for Abbrev,Instance in Addon:Sort( Addon.DUNGEONS:GetDungeonsF( UnitLevel( 'player' ) ) ) do
+                    Instance.Locked = Addon.DUNGEONS:IsLocked( Instance );
                     Order = Order + 1;
                     Settings[ Abbrev ] = {
                         type = 'toggle',
@@ -293,7 +294,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         name = CreateColor( unpack( Instance.Color ) ):WrapTextInColorCode( Instance.Name ),
                         desc = Instance.Description,
                         arg = Abbrev,
-                        disabled = Instance.Disabled,
+                        disabled = Instance.Disabled or Instance.Locked,
                         get = function( Info )
                             if( Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] ~= nil ) then
                                 return Addon.DB:GetPersistence().DungeonQueue[ Info.arg ];
@@ -312,6 +313,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     name = 'Classic Raid Groups',
                 };
                 for Abbrev,Instance in Addon:Sort( Addon.DUNGEONS:GetRaidsF( UnitLevel( 'player' ) ) ) do
+                    Instance.Locked = Addon.DUNGEONS:IsLocked( Instance );
                     Order = Order + 1;
                     Settings[ Abbrev ] = {
                         type = 'toggle',
@@ -319,7 +321,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         name = CreateColor( unpack( Instance.Color ) ):WrapTextInColorCode( Instance.Name ),
                         desc = Instance.Description,
                         arg = Abbrev,
-                        disabled = Instance.Disabled,
+                        disabled = Instance.Disabled or Instance.Locked,
                         get = function( Info )
                             if( Addon.DB:GetPersistence().RaidQueue[ Info.arg ] ~= nil ) then
                                 return Addon.DB:GetPersistence().RaidQueue[ Info.arg ];
