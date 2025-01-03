@@ -287,6 +287,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 };
                 for Abbrev,Instance in Addon:Sort( Addon.DUNGEONS:GetDungeonsF( UnitLevel( 'player' ) ) ) do
                     Instance.Locked = Addon.DUNGEONS:IsLocked( Instance );
+                    if( not Addon.DB:GetPersistence().RespectLocks ) then
+                        Instance.Locked = false;
+                    end
                     Order = Order + 1;
                     Settings[ Abbrev ] = {
                         type = 'toggle',
@@ -297,6 +300,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         disabled = Instance.Disabled or Instance.Locked,
                         get = function( Info )
                             if( Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] ~= nil ) then
+                                if( Instance.Locked and Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] ) then
+                                    Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] = false;
+                                end
                                 return Addon.DB:GetPersistence().DungeonQueue[ Info.arg ];
                             end
                         end,
@@ -314,6 +320,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 };
                 for Abbrev,Instance in Addon:Sort( Addon.DUNGEONS:GetRaidsF( UnitLevel( 'player' ) ) ) do
                     Instance.Locked = Addon.DUNGEONS:IsLocked( Instance );
+                    if( not Addon.DB:GetPersistence().RespectLocks ) then
+                        Instance.Locked = false;
+                    end
                     Order = Order + 1;
                     Settings[ Abbrev ] = {
                         type = 'toggle',
@@ -324,6 +333,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         disabled = Instance.Disabled or Instance.Locked,
                         get = function( Info )
                             if( Addon.DB:GetPersistence().RaidQueue[ Info.arg ] ~= nil ) then
+                                if( Instance.Locked and Addon.DB:GetPersistence().RaidQueue[ Info.arg ] ) then
+                                    Addon.DB:GetPersistence().RaidQueue[ Info.arg ] = false;
+                                end
                                 return Addon.DB:GetPersistence().RaidQueue[ Info.arg ];
                             end
                         end,
@@ -332,6 +344,22 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end,
                     };
                 end
+
+                Order = Order + 1;
+                Settings.QueueConfig = {
+                    type = 'header',
+                    order = Order,
+                    name = '---',
+                };
+
+                Order = Order + 1;
+                Settings.RespectLocks = {
+                    type = 'toggle',
+                    order = Order,
+                    name = 'Respect Lockouts',
+                    desc = 'Disable instances which you are locked for',
+                    arg = 'RespectLocks',
+                };
 
                 return Settings;
             end

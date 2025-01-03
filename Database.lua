@@ -90,6 +90,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 },
                 RaidQueue = {
                 },
+                RespectLocks = true,
                 ColorNamesByClass = true,
                 Roles = {
                     DPS = true,
