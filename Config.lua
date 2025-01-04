@@ -357,7 +357,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     type = 'toggle',
                     order = Order,
                     name = 'Respect Lockouts',
-                    desc = 'Disable instances which you are locked for',
+                    desc = 'Disable instances for which you are locked',
                     arg = 'RespectLocks',
                 };
 
