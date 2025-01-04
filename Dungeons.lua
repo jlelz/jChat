@@ -714,6 +714,15 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                     BestLevels = {25,28},
                     PlayerLimit = {10},
                 };
+                Rules['THUNDER'] = {
+                    Abbrevs = {
+                        'thunder',
+                    },
+                    Description = 'Prince Thunderaan',
+                    LevelBracket = {60},
+                    BestLevels = {60},
+                    PlayerLimit = {40},
+                };
             end
             return Rules;
         end
@@ -753,7 +762,6 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                         Instances[ Key ].Name = Instances[ Key ].Name..','..Instances[ Key ].BestLevels[2];
                     end
                     Instances[ Key ].Name = Instances[ Key ].Name..']';
-
                     Instances[ Key ].Locked = Addon.DUNGEONS:IsLocked( Instances[ Key ] );
                     if( Instances[ Key ].Locked ) then
                         Instances[ Key ].Name = Instances[ Key ].Name..CreateColor( unpack( {212/255,57/255,57/255,1} ) ):WrapTextInColorCode( '[LOCKED]' );
