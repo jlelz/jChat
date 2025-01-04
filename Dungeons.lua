@@ -716,9 +716,18 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                 };
                 Rules['THUNDER'] = {
                     Abbrevs = {
-                        'thunder',
+                        'thunder','crystalvale',
                     },
                     Description = 'Prince Thunderaan',
+                    LevelBracket = {60},
+                    BestLevels = {60},
+                    PlayerLimit = {40},
+                };
+                Rules['NIGHTM'] = {
+                    Abbrevs = {
+                        'nightmaregrove','azuregos','lethon','emeriss','ysondre','taerar',
+                    },
+                    Description = 'Nightmare Grove Dragon World Bosses',
                     LevelBracket = {60},
                     BestLevels = {60},
                     PlayerLimit = {40},
