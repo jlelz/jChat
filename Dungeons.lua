@@ -743,7 +743,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                 };
                 Rules['KAZZ'] = {
                     Abbrevs = {
-                        'kazz','blastedlands',
+                        'kazz','taintedscar',
                     },
                     Description = 'Lord Kazzak',
                     LevelBracket = {60},
