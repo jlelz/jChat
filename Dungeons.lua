@@ -725,9 +725,27 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                 };
                 Rules['NIGHTM'] = {
                     Abbrevs = {
-                        'nightmaregrove','azuregos','lethon','emeriss','ysondre','taerar',
+                        'nightmaregrove','lethon','emeriss','ysondre','taerar',
                     },
                     Description = 'Nightmare Grove Dragon World Bosses',
+                    LevelBracket = {60},
+                    BestLevels = {60},
+                    PlayerLimit = {40},
+                };
+                Rules['AZUREG'] = {
+                    Abbrevs = {
+                        'azuregos','stormcliffs',
+                    },
+                    Description = 'Azuregos',
+                    LevelBracket = {60},
+                    BestLevels = {60},
+                    PlayerLimit = {40},
+                };
+                Rules['KAZZ'] = {
+                    Abbrevs = {
+                        'kazz','blastedlands',
+                    },
+                    Description = 'Lord Kazzak',
                     LevelBracket = {60},
                     BestLevels = {60},
                     PlayerLimit = {40},
