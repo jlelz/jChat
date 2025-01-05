@@ -431,7 +431,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             -- Invite check
             if( ChatType == 'WHISPER' and Addon.APP:GetValue( 'AutoInvite' ) ) then
-                if( Addon:Minify( OriginalText ):find( 'inv' ) ) then
+                if( Addon:Minify( OriginalText ) == 'inv' ) then
                     if( Addon.APP:GetValue( 'Debug' ) ) then
                         Addon.FRAMES:Debug( 'jChat:App','found "inv"' );
                     end
