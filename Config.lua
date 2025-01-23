@@ -401,6 +401,22 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     };
                 end
 
+                Order = Order+1;
+                Settings.TypeToggle = {
+                    type = 'header',
+                    order = Order,
+                    name = 'Message Types',
+                };
+
+                Order = Order+1;
+                Settings.BypassTypes = {
+                    type = 'toggle',
+                    order = Order,
+                    name = 'Bypass Types',
+                    desc = 'Allow disabled message types which are alerting',
+                    arg = 'BypassTypes',
+                };
+
                 --[[
                 Order = Order+1;
                 Settings.Channels = {
@@ -817,6 +833,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Setup Mention
             self.MentionPosition = Addon.FRAMES:AddMovable( {
                 Name = 'Mention Alert',
+                Label = 'Mention',
                 Value = 'Mention Alert Position\r Drag to your desired location',
             },UIParent );
             self.MentionPosition:Hide();

@@ -18,8 +18,8 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
 
             for i = 1,NumSaved do
-                local Name,Id,Reset,_,IsLocked,_,_,IsRaid,_,_,_,_ = GetSavedInstanceInfo( i );
-                if(  IsLocked ) then
+                local Name,Id,_,_,IsLocked = GetSavedInstanceInfo( i );
+                if( IsLocked ) then
                     for _,ABBREV in pairs( Instance.Abbrevs ) do
                         if( Addon:Minify( Name ):find( Addon:Minify( ABBREV ) ) ) then
                             return true;
@@ -667,7 +667,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Abbrevs = {
                         'aq','aq40','ahnq',
                     },
-                    Description = 'Ahn\'Qiraj',
+                    Description = 'Ahn\'Qiraj Temple',
                     LevelBracket = {60},
                     BestLevels = {60},
                     PlayerLimit = {40},
@@ -718,7 +718,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Abbrevs = {
                         'thunder','crystalvale',
                     },
-                    Description = 'Prince Thunderaan',
+                    Description = 'The Crystal Vale',
                     LevelBracket = {60},
                     BestLevels = {60},
                     PlayerLimit = {40},

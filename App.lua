@@ -30,7 +30,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         end
 
         Addon.APP.GetMentionFrame = function( self,MessageText )
-            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Value=MessageText },nil,self );
+            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label='Mention',Value=MessageText },nil,self );
 
             Frame:SetScript( 'OnDragStop',function( self )
                 self:StopMovingOrSizing();
@@ -464,19 +464,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
 
-            -- Prevent toggled off message types
-            local PossibleTypes = {};
-            for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
-                for i,MessageType in pairs( MessageTypes ) do
-                    PossibleTypes[ MessageType ] = Type;
-                end
-            end
-            local Values = Addon.APP:GetValue( 'ChatGroups' );
-            if( PossibleTypes[ Event ] and not Values[ PossibleTypes[ Event ] ] ) then
-                --print( 'stopped sending',Event,MessageText )
-                return true;
-            end
-
             -- GM check
             if( GMFlag == 'GM' and ChatType == 'WHISPER' ) then
                 return;
@@ -566,6 +553,26 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
             ]]
+
+            -- Prevent toggled off message types
+            local PossibleTypes = {};
+            for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
+                for i,MessageType in pairs( MessageTypes ) do
+                    PossibleTypes[ MessageType ] = Type;
+                end
+            end
+            local Values = Addon.APP:GetValue( 'ChatGroups' );
+            if( PossibleTypes[ Event ] and not Values[ PossibleTypes[ Event ] ] ) then
+                --print( 'stopped sending',Event,MessageText )
+
+                if( Addon.APP:GetValue( 'BypassTypes' ) and Watched ) then
+                    -- allw passthrough
+                elseif( Addon.APP:GetValue( 'BypassTypes' ) and Mentioned ) then
+                    -- allow passthrough
+                else
+                    return true;
+                end
+            end
 
             -- Format message
             MessageText,r,g,b,a,id = Addon.APP.Format(
