@@ -750,6 +750,15 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                     BestLevels = {60},
                     PlayerLimit = {40},
                 };
+                Rules['KARA'] = {
+                    Abbrevs = {
+                        'kara','crypts','deadwindpass',
+                    },
+                    Description = 'Karazhan Crypts',
+                    LevelBracket = {60},
+                    BestLevels = {60},
+                    PlayerLimit = {5},
+                };
             end
             return Rules;
         end
