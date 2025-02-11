@@ -31,6 +31,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
         Addon.APP.GetMentionFrame = function( self,MessageText )
             local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label='Mention',Value=MessageText },nil,self );
+            Frame:SetFrameStrata( 'MEDIUM' );
 
             Frame:SetScript( 'OnDragStop',function( self )
                 self:StopMovingOrSizing();
