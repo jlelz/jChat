@@ -29,9 +29,9 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
         end
 
-        Addon.APP.GetMentionFrame = function( self,MessageText )
-            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label='Mention',Value=MessageText },nil,self );
-            Frame:SetFrameStrata( 'MEDIUM' );
+        Addon.APP.GetAlertFrame = function( self,MessageText,Type )
+            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label=Type,Value=MessageText },nil,self );
+            --Frame:SetFrameStrata( 'MEDIUM' );
 
             Frame:SetScript( 'OnDragStop',function( self )
                 self:StopMovingOrSizing();
@@ -72,6 +72,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  string  Watched
         --  @param  bool    Mentioned
         --  @return list
+        local AlertLayer = 1;
         Addon.APP.Format = function( Event,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId,IconReplacement,Watched,Mentioned )
             local OriginalText = MessageText;
             local ChatType = strsub( Event,10 );
@@ -312,13 +313,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Addon.APP:GetValue( 'AFKAlert' ) and UnitIsAFK( 'player' ) ) then
                     PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                    local F = Addon.APP:GetMentionFrame( MessagePrefix..' '..MessageText );
+                    local F = Addon.APP:GetAlertFrame( MessagePrefix..' '..MessageText,'AFK-Whisper' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
                         F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
                     else
                         F:SetPoint( 'center' );
                     end
+                    AlertLayer = AlertLayer+1;
+                    F:SetFrameLevel( AlertLayer );
 
                     F.Butt:SetScript( 'OnClick',function( self )
                         if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
@@ -337,13 +340,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Addon.APP:GetValue( 'MentionAlert' ) ) then
                     PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                    local F = Addon.APP:GetMentionFrame( MessagePrefix..' '..MessageText );
+                    local F = Addon.APP:GetAlertFrame( MessagePrefix..' '..MessageText,'Mention' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
                         F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
                     else
                         F:SetPoint( 'center' );
                     end
+                    AlertLayer = AlertLayer+1;
+                    F:SetFrameLevel( AlertLayer );
 
                     F.Butt:SetScript( 'OnClick',function( self )
                         if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
