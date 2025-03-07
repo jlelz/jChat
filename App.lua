@@ -468,6 +468,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                     end
                 end
+                for i,IgnoredIdiot in ipairs( IgnoredMessages ) do
+                    if( Addon:Minify( PlayerName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
+                        return true;
+                    end
+                end
             end
 
             -- GM check
