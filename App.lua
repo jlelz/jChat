@@ -328,6 +328,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                         self:GetParent():Hide();
                     end );
+                    F:SetAlpha( Addon.APP:GetValue( 'MentionAlpha' ) );
 
                     Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
                 end
@@ -355,6 +356,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                         self:GetParent():Hide();
                     end );
+                    F:SetAlpha( Addon.APP:GetValue( 'MentionAlpha' ) );
 
                     Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
                 end

@@ -272,6 +272,30 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     style = 'radio',
                     arg = 'MentionMove',
                 };
+                Order = Order+1;
+                Settings.MentionAlpha = {
+                    type = 'range',
+                    order = Order,
+                    name = 'Message Window Alpha',
+                    min = 0,max = 1,step = 0.1,
+                    set = function( Info,Value )
+                        if( Value > 0 ) then
+                            Addon.CONFIG.MentionPosition:Show();
+                        else
+                            Addon.CONFIG.MentionPosition:Hide();
+                        end
+                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                            Addon.DB:GetPersistence()[ Info.arg ] = Value;
+                        end
+                        Addon.CONFIG.MentionPosition:SetAlpha( Value );
+                    end,
+                    get = function( Info )
+                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                            return Addon.DB:GetPersistence()[ Info.arg ];
+                        end
+                    end,
+                    arg = 'MentionAlpha',
+                };
 
                 return Settings;
             end

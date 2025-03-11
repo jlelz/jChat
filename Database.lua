@@ -25,6 +25,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 MentionDrop = {
                 },
                 MentionMove = 0,
+                MentionAlpha = .5,
                 AliasList = {
                 },
                 ScrollBack = true,
