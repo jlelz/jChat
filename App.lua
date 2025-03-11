@@ -119,11 +119,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
             local HighLightColor = {};
-            if( Mentioned ) then
-                if( ChatTypeInfo.WHISPER ) then
-                    HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = ChatTypeInfo.WHISPER.r,ChatTypeInfo.WHISPER.g,ChatTypeInfo.WHISPER.b,1;
-                end
-            elseif( Watched and ( ChatType == 'WHISPER' ) == false ) then
+            if( Watched or Mentioned ) then
                 HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.APP:GetValue( 'AlertColor' ) );
             end
             ChatTypeInfo[ ChatType ] = ChatTypeInfo[ ChatType ] or {
@@ -300,6 +296,9 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Partial highlight
             if( Watched and ChatType ~= 'WHISPER' ) then
                 MessageText = Addon:GiSub( MessageText,Watched,CreateColor( HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a ):WrapTextInColorCode( Watched ) );
+            end
+            if( Mentioned ) then
+                MessageText = Addon:GiSub( MessageText,Mentioned,CreateColor( HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a ):WrapTextInColorCode( Mentioned ) );
             end
 
             -- Always sound whispers
@@ -506,7 +505,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             if( Addon.APP:GetValue( 'MentionAlert' ) ) then
                 if( Addon:Minify( OriginalText ):find( Addon:Minify( MyPlayerName ) ) ) then
-                    Mentioned = true;
+                    Mentioned = MyPlayerName;
                 end
                 if( Prefix and Prefix == Addon.DUNGEONS.PREFIX ) then
                     Mentioned = false;
@@ -516,7 +515,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( #AliasList > 0 ) then
                 for i,Alias in ipairs( AliasList ) do
                     if( Addon:Minify( OriginalText ):find( Addon:Minify( Alias ) ) ) then
-                        Mentioned = true;
+                        Mentioned = Alias;
                     end
                 end
                 if( Prefix and Prefix == Addon.DUNGEONS.PREFIX ) then
