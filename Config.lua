@@ -268,6 +268,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
                             Addon.DB:GetPersistence()[ Info.arg ] = Value;
                         end
+                        Addon.CONFIG.MentionPosition:SetAlpha( Addon.DB:GetValue( 'MentionAlpha' ) );
                     end,
                     style = 'radio',
                     arg = 'MentionMove',
