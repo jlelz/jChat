@@ -30,23 +30,34 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         end
 
         Addon.APP.GetAlertFrame = function( self,MessageText,Type )
-            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label=Type,Value=MessageText },nil,self );
-            --Frame:SetFrameStrata( 'MEDIUM' );
-
+            local BGA,TextA = Addon.APP:GetValue( 'MentionAlpha' ),1;
+            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label=Type,Value=MessageText,BGA=BGA,TextA=TextA },nil,self );
             Frame:SetScript( 'OnDragStop',function( self )
                 self:StopMovingOrSizing();
                 self:SetUserPlaced( true );
             end );
+            Frame:SetScript( 'OnUpdate',function( self )
 
-            Frame.Butt = CreateFrame( 'Button',nil,Frame,'UIPanelButtonTemplate' );
-            Frame.Butt:SetSize( 32,32 );
-            Frame.Butt:SetText( 'OK' );
-            Frame.Butt:SetScript( 'OnClick',function( self )
-                self:GetParent():Hide();
+                local BGAlpha = self.Texture:GetAlpha();
+
+                if( self:IsMouseOver() ) then
+                    if( BGAlpha <= 0 ) then
+                        if( self.Label ) then
+                            self.Label:SetAlpha( TextA );
+                        end
+                        self.Texture:SetAlpha( BGA );
+                        self.Butt:SetAlpha( TextA );
+                    end
+                else
+                    if( BGAlpha >= 0 ) then
+                        if( self.Label ) then
+                            self.Label:SetAlpha( 0 );
+                        end
+                        self.Texture:SetAlpha( 0 );
+                        self.Butt:SetAlpha( 0 );
+                    end
+                end
             end );
-            Frame.Butt:SetPoint( 'topright',Frame,'topright',-10,-10 );
-            Frame.Butt:RegisterForClicks( 'AnyDown','AnyUp' );
-
             return Frame;
         end
 
@@ -328,7 +339,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                         self:GetParent():Hide();
                     end );
-                    F:SetAlpha( Addon.APP:GetValue( 'MentionAlpha' ) );
 
                     Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
                 end
@@ -356,7 +366,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                         self:GetParent():Hide();
                     end );
-                    F:SetAlpha( Addon.APP:GetValue( 'MentionAlpha' ) );
 
                     Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
                 end
