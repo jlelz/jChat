@@ -20,11 +20,20 @@ https://github.com/jlelz/jChat/issues
 
 ## Screenshots
 <p float="center">
-  <img src="https://i.imgur.com/MfOTgKO.png" width="500" />
+  <img src="https://i.imgur.com/oU0cEgG.png" width="500" />
 </p>
 <p float="center">
-  <img src="https://i.imgur.com/lEMEOlh.png" width="500" />
+  <img src="https://i.imgur.com/Mw9aL1T.png" width="500" />
 </p>
 <p float="center">
-  <img src="https://i.imgur.com/rB41NRe.png" width="500" />
+  <img src="https://i.imgur.com/iqF9gyG.png" width="500" />
+</p>
+<p float="center">
+  <img src="https://i.imgur.com/iu2abgL.png" width="500" />
+</p>
+<p float="center">
+  <img src="https://i.imgur.com/dcMSOIF.png" width="500" />
+</p>
+<p float="center">
+  <img src="https://i.imgur.com/zGUZ7Gx.png" width="500" />
 </p>
