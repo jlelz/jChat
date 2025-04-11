@@ -70,7 +70,8 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     IGNORED = true,
                     CHANNEL = true,
                 },
-                BypassTypes = false,
+                BypassTypes = true,
+                ChannelBypass = {},
                 ChatFilters = {
                     PARTY = true,
                     RAID = true,

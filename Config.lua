@@ -649,6 +649,45 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
 
+                Order = Order+1;
+                Settings.ChannelsAllowed = {
+                    type = 'header',
+                    order = Order,
+                    name = 'Allowed Channels',
+                };
+                for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
+                    if( ChannelData.Name ) then
+
+                        -- club
+                        local ClubData = Addon:Explode( ChannelData.Name,':' );
+                        if( ClubData and tonumber( #ClubData ) > 0 ) then
+                            local ClubId = ClubData[2] or 0;
+                            if( tonumber( ClubId ) > 0 ) then
+                                local ClubInfo = C_Club.GetClubInfo( ClubId );
+                                if( ClubInfo ) then
+                                    ChannelData.Name = ClubInfo.shortName or ClubInfo.name;
+                                    ChannelData.Name = ChannelData.Name:gsub( '%W','' );
+                                end
+                            end
+                        end
+                        
+                        Order = Order+1;
+                        Settings[ ChannelData.Name..'Allow' ] = {
+                            type = 'toggle',
+                            order = Order,
+                            get = function( Info )
+                                return Addon.DB:GetPersistence().ChannelBypass[ Info.arg ] or false;
+                            end,
+                            set = function( Info,Value )
+                                Addon.DB:GetPersistence().ChannelBypass[ Info.arg ] = Value
+                            end,
+                            name = '['..ChannelData.Id..')'..ChannelData.LongName..']',
+                            desc = 'Always Allow '..ChannelData.Name..' chat messages',
+                            arg = ChannelData.Name,
+                        };
+                    end
+                end
+
                 return Settings;
             end
 
