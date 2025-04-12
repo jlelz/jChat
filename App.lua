@@ -591,9 +591,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 elseif( Addon.APP:GetValue( 'BypassTypes' ) and Mentioned ) then
                     -- allow passthrough
                 else
-                    if( not Addon.DB:GetPersistence().ChannelBypass[ ChannelBaseName ] ) then
-                        return true;
-                    end
+                    return true;
                 end
             end
 
