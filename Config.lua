@@ -398,47 +398,12 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     },
                 };
 
-                for GroupName,GroupData in pairs( self:GetMessageGroups() ) do
-                    Order = Order+1;
-                    Settings[ GroupName..'Message' ] = {
-                        type = 'toggle',
-                        order = Order,
-                        name = GroupName,
-                        desc = 'Enable/disable messages for '..GroupName,
-                        arg = GroupName,
-                        get = function( Info )
-                            if( Addon.DB:GetPersistence().ChatGroups[ Info.arg ] ~= nil ) then
-                                return Addon.DB:GetPersistence().ChatGroups[ Info.arg ];
-                            end
-                        end,
-                        set = function( Info,Value )
-                            if( Addon.DB:GetPersistence().ChatGroups[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().ChatGroups[ Info.arg ] = Value;
-                                for _,GroupName in pairs( self:GetMessageGroups()[ Info.arg ] ) do
-                                    -- Always allow outgoing whispers
-                                    if( Addon:Minify( GroupName ):find( 'whisperinform' ) ) then
-                                        Value = true;
-                                    end
-                                    Addon.APP:SetGroup( GroupName,Value );
-                                end
-                            end
-                        end,
-                    };
-                end
-
-                Order = Order+1;
-                Settings.TypeToggle = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Message Types',
-                };
-
                 Order = Order+1;
                 Settings.BypassTypes = {
                     type = 'toggle',
                     order = Order,
-                    name = 'Bypass Types',
-                    desc = 'Allow disabled message types which are alerting',
+                    name = 'Bypass Channel Permission',
+                    desc = 'Allow disabled channel messages which are alerting',
                     arg = 'BypassTypes',
                 };
 
@@ -583,6 +548,44 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end,
                 };
                 ]]
+
+                Order = Order+1;
+                Settings.ChannelsAllowed = {
+                    type = 'header',
+                    order = Order,
+                    name = 'Allowed Channels',
+                };
+                for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
+                    if( ChannelData.Name ) then
+                        -- club
+                        local ClubData = Addon:Explode( ChannelData.Name,':' );
+                        if( ClubData and tonumber( #ClubData ) > 0 ) then
+                            local ClubId = ClubData[2] or 0;
+                            if( tonumber( ClubId ) > 0 ) then
+                                local ClubInfo = C_Club.GetClubInfo( ClubId );
+                                if( ClubInfo ) then
+                                    ChannelData.Name = ClubInfo.shortName or ClubInfo.name;
+                                    ChannelData.Name = ChannelData.Name:gsub( '%W','' );
+                                end
+                            end
+                        end
+                        
+                        Order = Order+1;
+                        Settings[ ChannelData.Name..'Allowed' ] = {
+                            type = 'toggle',
+                            order = Order,
+                            get = function( Info )
+                                return Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed or false;
+                            end,
+                            set = function( Info,Value )
+                                Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed = Value;
+                            end,
+                            name = '['..ChannelData.Id..')'..ChannelData.LongName..']',
+                            desc = 'Allow '..ChannelData.Name..' messages',
+                            arg = ChannelData.Name,
+                        };
+                    end
+                end
 
                 Order = Order+1;
                 Settings.ChannelColors = {
@@ -1042,9 +1045,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 },
                 IGNORED = {
                     'IGNORED',
-                },
-                CHANNEL = {
-                    'CHANNEL',
                 },
             };
         end

@@ -17,18 +17,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
         end
 
-        --
-        -- Set chat group
-        --
-        -- @return void
-        Addon.APP.SetGroup = function( self,Group,Value )
-            if ( Value ) then
-                ChatFrame_AddMessageGroup( Addon.CHAT.ChatFrame,Group );
-            else
-                ChatFrame_RemoveMessageGroup( Addon.CHAT.ChatFrame,Group );
-            end
-        end
-
         Addon.APP.GetAlertFrame = function( self,MessageText,Type )
             local BGA,TextA = Addon.APP:GetValue( 'MentionAlpha' ),1;
             local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label=Type,Value=MessageText,BGA=BGA,TextA=TextA },nil,self );
@@ -575,25 +563,25 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             ]]
 
-            -- Prevent toggled off message types
-            local PossibleTypes = {};
-            for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
-                for i,MessageType in pairs( MessageTypes ) do
-                    PossibleTypes[ MessageType ] = Type;
+            -- Permission check
+            local Allowed = true;
+            if( ChannelId > 0 ) then
+                if( not Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ].Allowed ) then
+                    Allowed = false;
                 end
-            end
-            local Values = Addon.APP:GetValue( 'ChatGroups' );
-            if( PossibleTypes[ Event ] and not Values[ PossibleTypes[ Event ] ] ) then
-                --print( 'stopped sending',Event,MessageText )
 
-                if( Addon.APP:GetValue( 'BypassTypes' ) and Watched ) then
-                    -- allw passthrough
-                elseif( Addon.APP:GetValue( 'BypassTypes' ) and Mentioned ) then
-                    -- allow passthrough
-                else
+                if( Watched or Mentioned ) then
+                    if( Addon.APP:GetValue( 'BypassTypes' ) ) then
+                        Allowed = true;
+                    end
+                end
+
+                if( not Allowed ) then
                     return true;
                 end
             end
+
+
 
             -- Format message
             MessageText,r,g,b,a,id = Addon.APP.Format(
@@ -696,23 +684,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
             end );
-
-            -- Chat types
-            for Group,GroupData in pairs( Addon.CONFIG:GetMessageGroups() ) do
-                for _,GroupName in pairs( GroupData ) do
-                    -- Always allow outgoing whispers
-                    if( Addon:Minify( GroupName ):find( 'whisperinform' ) ) then
-                        self:SetGroup( GroupName,true );
-                    -- Respect checked options
-                    else
-                        local Groups = self:GetValue( 'ChatGroups' );
-                        if( Groups ) then
-                            self:SetGroup( GroupName,Groups[ Group ] );
-                            ToggleChatColorNamesByClassGroup( Groups[ Group ],GroupName );
-                        end
-                    end
-                end
-            end
 
             -- Chat filter
             for Filter,FilterData in pairs( Addon.CONFIG:GetChatFilters() ) do
