@@ -566,7 +566,17 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Permission check
             local Allowed = true;
             if( ChannelId > 0 ) then
-                if( not Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ].Allowed ) then
+                local Permission = Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ];
+                if( not Permission ) then
+                    for i,ChannelN in pairs( Addon.APP:GetValue( 'Channels' ) ) do
+                        if( Addon:Minify( ChannelN ):find( Addon:Minify( ChannelBaseName ) ) ) then
+                            Permission = Addon.APP:GetValue( 'Channels' )[ChannelN ];
+                        end
+                    end
+                end
+
+                if( Permission and Permission.Allowed == false ) then
+                    --print( 'blocking',ChannelBaseName )
                     Allowed = false;
                 end
 

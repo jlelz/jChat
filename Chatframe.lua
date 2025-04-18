@@ -321,7 +321,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Color ) then
                     Addon.DB:GetPersistence().Channels[ Key ].Color = PreviousChannelPersistence[ Key ].Color;
                 end
-                if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Allowed ) then
+                if( PreviousChannelPersistence[ Key ].Allowed ~= nil ) then
                     Addon.DB:GetPersistence().Channels[ Key ].Allowed = PreviousChannelPersistence[ Key ].Allowed;
                 end
             end
