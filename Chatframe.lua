@@ -317,6 +317,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Addon.DB:GetPersistence().Channels[ Key ].Id = ChannelData.Id;
                 Addon.DB:GetPersistence().Channels[ Key ].Name = Key;
                 Addon.DB:GetPersistence().Channels[ Key ].Color = self:GetBaseColor();
+                Addon.DB:GetPersistence().Channels[ Key ].Allowed = true;
 
                 if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Color ) then
                     Addon.DB:GetPersistence().Channels[ Key ].Color = PreviousChannelPersistence[ Key ].Color;
