@@ -565,13 +565,13 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             -- Permission check
             local Allowed = true;
+            local Permission;
             if( ChannelId > 0 ) then
-                local Permission = Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ];
+                Permission = Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ] or false;
+
                 if( not Permission ) then
-                    for i,ChannelN in pairs( Addon.APP:GetValue( 'Channels' ) ) do
-                        if( Addon:Minify( ChannelN ):find( Addon:Minify( ChannelBaseName ) ) ) then
-                            Permission = Addon.APP:GetValue( 'Channels' )[ChannelN ];
-                        end
+                    if( Addon:Minify( ChannelBaseName ):find( 'trade' ) ) then
+                        Permission = Addon.APP:GetValue( 'Channels' )[ 'Trade' ];
                     end
                 end
 
@@ -590,8 +590,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     return true;
                 end
             end
-
-
 
             -- Format message
             MessageText,r,g,b,a,id = Addon.APP.Format(
