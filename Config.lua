@@ -391,21 +391,14 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             local function GetChannels()
                 local Order = 1;
                 local Settings = {
-                    ChannelMessages = {
-                        type = 'header',
+                    BypassTypes = {
+                        type = 'toggle',
                         order = Order,
-                        name = 'Message Types',
+                        name = 'Bypass Channel Permission',
+                        desc = 'Allow disabled channel messages which are alerting',
+                        arg = 'BypassTypes',
                     },
-                };
-
-                Order = Order+1;
-                Settings.BypassTypes = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Bypass Channel Permission',
-                    desc = 'Allow disabled channel messages which are alerting',
-                    arg = 'BypassTypes',
-                };
+                }
 
                 --[[
                 Order = Order+1;
@@ -553,7 +546,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Settings.ChannelsAllowed = {
                     type = 'header',
                     order = Order,
-                    name = 'Allowed Channels',
+                    name = 'Message Channels',
                 };
                 for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
                     if( ChannelData.Name ) then
@@ -591,7 +584,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Settings.ChannelColors = {
                     type = 'header',
                     order = Order,
-                    name = 'Colors',
+                    name = 'Message Colors',
                 };
 
                 for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
@@ -650,6 +643,41 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             --hasAlpha = true,
                         };
                     end
+                end
+
+                Order = Order+1;
+                Settings.ChannelMessages = {
+                    type = 'header',
+                    order = Order,
+                    name = 'Message Types',
+                };
+
+                for GroupName,GroupData in pairs( self:GetMessageGroups() ) do
+                    Order = Order+1;
+                    Settings[ GroupName..'Message' ] = {
+                        type = 'toggle',
+                        order = Order,
+                        name = GroupName,
+                        desc = 'Enable/disable messages for '..GroupName,
+                        arg = GroupName,
+                        get = function( Info )
+                            if( Addon.DB:GetPersistence().ChatGroups[ Info.arg ] ~= nil ) then
+                                return Addon.DB:GetPersistence().ChatGroups[ Info.arg ];
+                            end
+                        end,
+                        set = function( Info,Value )
+                            if( Addon.DB:GetPersistence().ChatGroups[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence().ChatGroups[ Info.arg ] = Value;
+                                for _,GroupName in pairs( self:GetMessageGroups()[ Info.arg ] ) do
+                                    -- Always allow outgoing whispers
+                                    if( Addon:Minify( GroupName ):find( 'whisperinform' ) ) then
+                                        Value = true;
+                                    end
+                                    Addon.CHAT:SetGroup( GroupName,Value );
+                                end
+                            end
+                        end,
+                    };
                 end
 
                 return Settings;
@@ -1158,10 +1186,12 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             return Addon.DB:GetPersistence().AliasList;
         end
 
-        Addon.CONFIG.RegisterCallbacks = function( self,ChatLib )
+        Addon.CONFIG.RegisterCallbacks = function( self )
             hooksecurefunc( 'ToggleChatMessageGroup',function( Checked,Group )
-                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatLib.ChatFrame,Group ) ~= nil ) then
-                    ChatLib:SetGroup( Group,Checked );
+                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( Addon.CHAT.ChatFrame,Group ) ~= nil ) then
+                    if( Addon.DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
+                        Addon.DB:GetPersistence().ChatGroups[ Group ] = Checked;
+                    end
                 end
             end );
             hooksecurefunc( 'ToggleChatColorNamesByClassGroup',function( Checked,Group )

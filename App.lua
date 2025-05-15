@@ -473,6 +473,19 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
 
+            -- Prevent toggled off message types
+            local PossibleTypes = {};
+            for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
+                for i,MessageType in pairs( MessageTypes ) do
+                    PossibleTypes[ MessageType ] = Type;
+                end
+            end
+            local Values = Addon.APP:GetValue( 'ChatGroups' );
+            if( PossibleTypes[ Event ] and not Values[ PossibleTypes[ Event ] ] ) then
+                --print( 'stopped sending',Event,MessageText )
+                return true;
+            end
+
             -- GM check
             if( GMFlag == 'GM' and ChatType == 'WHISPER' ) then
                 return;
@@ -693,6 +706,23 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end );
 
+            -- Chat types
+            for Group,GroupData in pairs( Addon.CONFIG:GetMessageGroups() ) do
+                for _,GroupName in pairs( GroupData ) do
+                    -- Always allow outgoing whispers
+                    if( Addon:Minify( GroupName ):find( 'whisperinform' ) ) then
+                        Addon.CHAT:SetGroup( GroupName,true );
+                    -- Respect checked options
+                    else
+                        local Groups = self:GetValue( 'ChatGroups' );
+                        if( Groups ) then
+                            Addon.CHAT:SetGroup( GroupName,Groups[ Group ] );
+                            ToggleChatColorNamesByClassGroup( Groups[ Group ],GroupName );
+                        end
+                    end
+                end
+            end
+
             -- Chat filter
             for Filter,FilterData in pairs( Addon.CONFIG:GetChatFilters() ) do
                 for _,FilterName in pairs( FilterData ) do
@@ -770,7 +800,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             ]]
 
             -- Config callbacks
-            Addon.CONFIG:RegisterCallbacks( self );
+            Addon.CONFIG:RegisterCallbacks();
 
             -- Slash command
             SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
