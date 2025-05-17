@@ -14,8 +14,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.CHAT.SetFont = function( self,Font,ChatFrame )
             if( Font ) then
                 ChatFrame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
-                ChatFrame:SetShadowOffset( 0,0 );
-                ChatFrame:SetShadowColor( 0,0,0,0 );
+                ChatFrame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                ChatFrame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
             end
         end
 
@@ -221,6 +221,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
         end
+
         -- @todo: review GetClubName and how it functions here
         -- functionality may have gotten broken. check on this
         Addon.CHAT.InitCommunity = function( self,ChatFrame,ClubId,StreamId )
@@ -295,7 +296,6 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Initialize channel persistence
             local PreviousChannelPersistence = Addon.DB:GetPersistence().Channels;
             Addon.DB:GetPersistence().Channels = {};
-
             for Id,ChannelData in pairs( self:GetChannels() ) do
                 local Club;
                 local ClubData = Addon:Explode( ChannelData.Name,':' );

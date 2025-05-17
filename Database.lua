@@ -15,6 +15,18 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Family = 'ARIALN',
                     Size = 14,
                     Flags = 'THINOUTLINE',
+                    Shadow = {
+                        Color = {
+                            r = 0,
+                            g = 0,
+                            b = 0,
+                            a = 0,
+                        },
+                        Offset = {
+                            x = 2,
+                            y = -2,
+                        },
+                    },
                 },
                 FadeOut = false,
                 IgnoreList = {
