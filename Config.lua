@@ -557,8 +557,8 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             if( tonumber( ClubId ) > 0 ) then
                                 local ClubInfo = C_Club.GetClubInfo( ClubId );
                                 if( ClubInfo ) then
-                                    ChannelData.Name = ClubInfo.shortName or ClubInfo.name;
-                                    ChannelData.Name = ChannelData.Name:gsub( '%W','' );
+                                    ChannelData.Name = ClubInfo.name;
+                                    ChannelData.Name = ChannelData.Name:gsub( '%s+','' );
                                 end
                             end
                         end
@@ -597,8 +597,8 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             if( tonumber( ClubId ) > 0 ) then
                                 local ClubInfo = C_Club.GetClubInfo( ClubId );
                                 if( ClubInfo ) then
-                                    ChannelData.Name = ClubInfo.shortName or ClubInfo.name;
-                                    ChannelData.Name = ChannelData.Name:gsub( '%W','' );
+                                    ChannelData.Name = ClubInfo.name;
+                                    ChannelData.Name = ChannelData.Name:gsub( '%s+','' );
                                 end
                             end
                         end

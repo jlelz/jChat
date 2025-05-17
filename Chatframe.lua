@@ -161,7 +161,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 local LongName = Channels[i+1];
                 if( Club ) then
                     LongName = Club.name;
-                    LongName = LongName:gsub( '%W','' );
+                    LongName = LongName:gsub( '%s+','' );
                 end
 
                 ChannelList[ i ] = {
@@ -216,8 +216,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 local ClubId = ClubData[2] or 0;
                 local ClubInfo = C_Club.GetClubInfo( ClubId );
                 if( ClubInfo ) then
-                    local Name = ClubInfo.shortName or ClubInfo.name;
-                    return Name:gsub( '%W','' );
+                    local Name = ClubInfo.name;
+                    return Name:gsub( '%s+','' );
                 end
             end
         end
@@ -249,8 +249,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             for ChannelId,CName in pairs( ChatFrame.channelList ) do
 
                 local OldName = self:GetClubName( CName );
-                NewInfo.name = NewInfo.shortName or NewInfo.name;
-                NewInfo.name = NewInfo.name:gsub( '%W','' );
+                NewInfo.name = NewInfo.name;
+                NewInfo.name = NewInfo.name:gsub( '%s+','' );
 
                 if( NewInfo and NewInfo.name and OldName ) then
 
@@ -307,8 +307,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
                 local Key = ChannelData.Name;
                 if( Club ) then
-                    Key = Club.shortName or Club.name;
-                    Key = Key:gsub( '%W','' );
+                    Key = Club.name;
+                    Key = Key:gsub( '%s+','' );
 
                     Addon.DB:GetPersistence().Channels[ Key ] = Addon.DB:GetPersistence().Channels[ Key ] or {};
                 end

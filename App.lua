@@ -758,8 +758,8 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     if( tonumber( ClubId ) > 0 ) then
                         local ClubInfo = C_Club.GetClubInfo( ClubId );
                         if( ClubInfo ) then
-                            Channel.Name = ClubInfo.shortName or ClubInfo.name;
-                            Channel.Name = ChannelData.Name:gsub( '%W','' );
+                            Channel.Name = ClubInfo.name;
+                            Channel.Name = ChannelData.Name:gsub( '%s+','' );
                         end
                     end
                 end
