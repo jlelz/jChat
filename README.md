@@ -29,7 +29,7 @@ https://github.com/jlelz/jChat/issues
   <img src="https://i.imgur.com/iqF9gyG.png" width="500" />
 </p>
 <p float="center">
-  <img src="https://i.imgur.com/iu2abgL.png" width="500" />
+  <img src="https://i.imgur.com/VDFfqqM.png" width="500" />
 </p>
 <p float="center">
   <img src="https://i.imgur.com/dcMSOIF.png" width="500" />
