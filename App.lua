@@ -209,6 +209,13 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- https://wowpedia.fandom.com/wiki/Hyperlinks
             -- https://wowwiki-archive.fandom.com/wiki/ItemLink
             -- Interface/AddOns/Blizzard_UIPanels_Game/Mainline/ItemRef.lua
+            if( ChatType == 'COMMUNITIES_CHANNEL' ) then
+
+                local MessageInfo,ClubId,StreamId,ClubType = C_Club.GetInfoFromLastCommunityChatLine();
+                local ClubDisplayName = Addon.CHAT:GetClubName( StreamId..':'..ClubId );
+
+                ChannelBaseName = ClubDisplayName;
+            end
             local ChannelLink = '';
             if( tonumber( ChannelId ) > 0 ) then
                 ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..')'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2. Trade - City]|h"
@@ -238,23 +245,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Outfit link -- test code copied from reference links above
             --local OutfitLink = '|cffff80ff|Houtfit:"a;"aA%ib"a>!.h&Ul"uH"a8"v""a@"v<"a"!!!!5o!!!!!!!!!|h[|T1598183:13:13:-1:0|tOutfit]|h|r';
 
-
-            --[[
-            -- todo: fix communities link
-
-            if( ChatType == 'COMMUNITIES_CHANNEL' ) then
-                local IsBattleNetCommunity = BNId ~= nil and BNId ~= 0;
-                local MessageInfo,ClubId,StreamId,ClubType = C_Club.GetInfoFromLastCommunityChatLine();
-                if( MessageInfo ~= nil ) then
-                    if( IsBattleNetCommunity ) then
-                        PlayerLink = GetBNPlayerCommunityLink( PlayerRealm,PlayerName,BNId,ClubId,StreamId,MessageInfo.messageId.epoch,MessageInfo.messageId.position );
-                    else
-                        playerLink = GetPlayerCommunityLink( PlayerRealm,PlayerName,ClubId,StreamId,MessageInfo.messageId.epoch,MessageInfo.messageId.position );
-                    end
-                end
-            end
-            ]]
-
             -- join/leave
             if( ( not MessageText or MessageText == '' ) and ChatType == 'CHANNEL_JOIN' ) then
                 MessageText = 'has joined the channel.';
@@ -275,7 +265,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             local PlayerLevel = '';--'['..UnitLevel( PlayerId )..']';
 
             -- Message Prefix
-            local MessagePrefix = TimeStamp..ChannelLink..PFlag..PlayerLink..PlayerAction..PlayerLevel;
+            local MessagePrefix = TimeStamp..ChannelLink..PFlag..PlayerLink..PlayerAction..PlayerLevel ..': ';
 
             -- url copy
             if( Addon.APP:GetValue( 'LinksEnabled' ) ) then
@@ -311,7 +301,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Addon.APP:GetValue( 'AFKAlert' ) and UnitIsAFK( 'player' ) ) then
                     PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                    local F = Addon.APP:GetAlertFrame( MessagePrefix..' '..MessageText,'AFK-Whisper' );
+                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'AFK-Whisper' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
                         F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
@@ -338,7 +328,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Addon.APP:GetValue( 'MentionAlert' ) ) then
                     PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                    local F = Addon.APP:GetAlertFrame( MessagePrefix..' '..MessageText,'Mention' );
+                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'Mention' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
                         F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
@@ -364,7 +354,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 MessageText = MessageText..' : '..CreateColor( HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a ):WrapTextInColorCode( Watched );
                 PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                return MessagePrefix..' '..MessageText,HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a,Info.id;
+                return MessagePrefix..MessageText,HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a,Info.id;
             end
 
             -- Partial highlight
@@ -373,7 +363,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
             end
 
-            return MessagePrefix..' '..MessageText,ChannelColor.r,ChannelColor.g,ChannelColor.b,Info.id;
+            return MessagePrefix..MessageText,ChannelColor.r,ChannelColor.g,ChannelColor.b,Info.id;
         end
 
         --
