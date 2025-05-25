@@ -131,19 +131,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             ChatTypeInfo[ ChatType ].g,
             ChatTypeInfo[ ChatType ].b,
             ChatTypeInfo[ ChatType ].a = ChannelColor.r,ChannelColor.g,ChannelColor.b,ChannelColor.a;
-            -- Channel changes
-            --[[
-            if( Event == 'CHAT_MSG_CHANNEL_NOTICE_USER' ) then
-                local CausedPlayer = MessageText;
-                local AffectedPlayer = ChannelNameId;
-                local TypeOfEvent = Event;
-                if( AffectedPlayer ) then
-                    MessageText = AffectedPlayer..' '..TypeOfEvent;
-                else
-                    MessageText = CausedPlayer..' '..TypeOfEvent;
-                end
-            end
-            ]]
 
             -- Class color
             if( PlayerName and Addon.APP:GetValue( 'ColorNamesByClass' ) ) then
@@ -192,6 +179,13 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             else
                 PFlag = '';
             end
+            local PlayerAction = '';
+            if( ChatType == 'YELL' ) then
+                PlayerAction = ' yells';
+            end
+            if ( ChatType == 'WHISPER' ) then
+                PlayerAction = ' whispers';
+            end
 
             -- Timestamp
             local TimeStamp = '';
@@ -210,10 +204,9 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- https://wowwiki-archive.fandom.com/wiki/ItemLink
             -- Interface/AddOns/Blizzard_UIPanels_Game/Mainline/ItemRef.lua
             if( ChatType == 'COMMUNITIES_CHANNEL' ) then
-
+                -- Pattern: "^community%:%d*%:%d*$"
                 local MessageInfo,ClubId,StreamId,ClubType = C_Club.GetInfoFromLastCommunityChatLine();
                 local ClubDisplayName = Addon.CHAT:GetClubName( StreamId..':'..ClubId );
-
                 ChannelBaseName = ClubDisplayName;
             end
             local ChannelLink = '';
@@ -242,30 +235,41 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Player link
             local PlayerLink = "|Hplayer:"..PlayerRealm.."|h".."["..PlayerName.."]|h"; -- |Hplayer:Blasfemy-Grobbulus|h was here
 
-            -- Outfit link -- test code copied from reference links above
-            --local OutfitLink = '|cffff80ff|Houtfit:"a;"aA%ib"a>!.h&Ul"uH"a8"v""a@"v<"a"!!!!5o!!!!!!!!!|h[|T1598183:13:13:-1:0|tOutfit]|h|r';
-
-            -- join/leave
-            if( ( not MessageText or MessageText == '' ) and ChatType == 'CHANNEL_JOIN' ) then
-                MessageText = 'has joined the channel.';
-            elseif( ( not MessageText or MessageText == '' ) and ChatType == 'CHANNEL_LEAVE' ) then
-                MessageText = 'has left the channel.';
-            end
-
-            -- Player action
-            local PlayerAction = '';
-            if( ChatType == 'YELL' ) then
-                PlayerAction = ' yells';
-            end
-            if ( ChatType == 'WHISPER' ) then
-                PlayerAction = ' whispers';
-            end
-
             -- Player level
             local PlayerLevel = '';--'['..UnitLevel( PlayerId )..']';
 
+            -- Event messages
+            -- CHAT_MSG_CHANNEL_NOTICE_USER 
+            -- https://github.com/tekkub/wow-globalstrings/blob/master/GlobalStrings/enUS.lua
+            -- file is super old but works. i ran /dump CHAT_SET_MODERATOR_NOTICE to test
+            -- @todo: would be nice to check for a new version of this file that's up to date
+            local UserActions = '';
+            --GetFixedLink( )
+            if( ChatType == 'CHANNEL_JOIN' ) then
+                MessageText = CHAT_CHANNEL_JOIN_GET:format( PlayerLink );
+            elseif( ChatType == 'CHANNEL_LEAVE' ) then
+                MessageText = CHAT_CHANNEL_LEAVE_GET:format( PlayerLink );
+            elseif( Event == 'CHAT_MSG_CHANNEL_NOTICE_USER' ) then
+                local GlobalString = _G["CHAT_"..ChatType.."_NOTICE_BN"];
+                if( not GlobalString ) then
+                    GlobalString = _G["CHAT_"..ChatType.."_NOTICE"];
+                end
+                if( not GlobalString ) then
+                    GlobalString = _G["CHAT_"..ChatType.."_NOTICE"];
+                end
+                if( not GlobalString ) then
+                    if( Addon.APP:GetValue( 'Debug' ) ) then
+                        --Addon.FRAMES:Debug( 'Missing global string',"CHAT_"..ChatType.."_NOTICE" );
+                    end
+                    return;
+                end
+                MessageText = GlobalString:format( ChannelBaseName,PlayerLink );
+            else
+                UserActions = PFlag..PlayerLink..PlayerAction..PlayerLevel;
+            end
+
             -- Message Prefix
-            local MessagePrefix = TimeStamp..ChannelLink..PFlag..PlayerLink..PlayerAction..PlayerLevel ..': ';
+            local MessagePrefix = TimeStamp..ChannelLink..UserActions..': ';
 
             -- url copy
             if( Addon.APP:GetValue( 'LinksEnabled' ) ) then
@@ -288,65 +292,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             if( Mentioned ) then
                 MessageText = Addon:GiSub( MessageText,Mentioned,CreateColor( HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a ):WrapTextInColorCode( Mentioned ) );
-            end
-
-            -- Always sound whispers
-            if ( ChatType == 'WHISPER' ) then
-                PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
-            end
-
-            -- Always sound whispers
-            if( ChatType == 'WHISPER' and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ~= true ) then
-
-                if( Addon.APP:GetValue( 'AFKAlert' ) and UnitIsAFK( 'player' ) ) then
-                    PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
-
-                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'AFK-Whisper' );
-                    local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
-                    if( MentionDrop.x and MentionDrop.y ) then
-                        F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
-                    else
-                        F:SetPoint( 'center' );
-                    end
-                    AlertLayer = AlertLayer+1;
-                    F:SetFrameLevel( AlertLayer );
-
-                    F.Butt:SetScript( 'OnClick',function( self )
-                        if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
-                            Addon.APP.Notices[ Addon:Minify( MessageText ) ] = nil;
-                        end
-                        self:GetParent():Hide();
-                    end );
-
-                    Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
-                end
-            end
-
-            -- Always sound mentions
-            if( Mentioned and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ~= true ) then
-
-                if( Addon.APP:GetValue( 'MentionAlert' ) ) then
-                    PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
-
-                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'Mention' );
-                    local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
-                    if( MentionDrop.x and MentionDrop.y ) then
-                        F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
-                    else
-                        F:SetPoint( 'center' );
-                    end
-                    AlertLayer = AlertLayer+1;
-                    F:SetFrameLevel( AlertLayer );
-
-                    F.Butt:SetScript( 'OnClick',function( self )
-                        if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
-                            Addon.APP.Notices[ Addon:Minify( MessageText ) ] = nil;
-                        end
-                        self:GetParent():Hide();
-                    end );
-
-                    Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
-                end
             end
 
             -- Full highlight
@@ -615,6 +560,66 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             );
 
             -- Display
+
+            -- Always sound whispers
+            if ( ChatType == 'WHISPER' ) then
+                PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
+            end
+
+            -- Always sound whispers
+            if( ChatType == 'WHISPER' and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ~= true ) then
+
+                if( Addon.APP:GetValue( 'AFKAlert' ) and UnitIsAFK( 'player' ) ) then
+                    PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
+
+                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'AFK-Whisper' );
+                    local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
+                    if( MentionDrop.x and MentionDrop.y ) then
+                        F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
+                    else
+                        F:SetPoint( 'center' );
+                    end
+                    AlertLayer = AlertLayer+1;
+                    F:SetFrameLevel( AlertLayer );
+
+                    F.Butt:SetScript( 'OnClick',function( self )
+                        if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
+                            Addon.APP.Notices[ Addon:Minify( MessageText ) ] = nil;
+                        end
+                        self:GetParent():Hide();
+                    end );
+
+                    Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
+                end
+            end
+
+            -- Always sound mentions
+            if( Mentioned and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ~= true ) then
+
+                if( Addon.APP:GetValue( 'MentionAlert' ) ) then
+                    PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
+
+                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'Mention' );
+                    local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
+                    if( MentionDrop.x and MentionDrop.y ) then
+                        F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
+                    else
+                        F:SetPoint( 'center' );
+                    end
+                    AlertLayer = AlertLayer+1;
+                    F:SetFrameLevel( AlertLayer );
+
+                    F.Butt:SetScript( 'OnClick',function( self )
+                        if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
+                            Addon.APP.Notices[ Addon:Minify( MessageText ) ] = nil;
+                        end
+                        self:GetParent():Hide();
+                    end );
+
+                    Addon.APP.Notices[ Addon:Minify( MessageText ) ] = true;
+                end
+            end
+
             Addon.CHAT.ChatFrame:AddMessage( MessageText,r,g,b,id );
 
             return true;
