@@ -572,7 +572,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Addon.APP:GetValue( 'AFKAlert' ) and UnitIsAFK( 'player' ) ) then
                     PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'AFK-Whisper' );
+                    local F = Addon.APP:GetAlertFrame( MessageText,'AFK-Whisper' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
                         F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
@@ -599,7 +599,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Addon.APP:GetValue( 'MentionAlert' ) ) then
                     PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
 
-                    local F = Addon.APP:GetAlertFrame( MessagePrefix..MessageText,'Mention' );
+                    local F = Addon.APP:GetAlertFrame( MessageText,'Mention' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
                         F:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
