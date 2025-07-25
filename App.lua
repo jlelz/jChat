@@ -151,13 +151,13 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             MessageText = RemoveExtraSpaces( MessageText );
 
             -- Questie support
-            local Text;
+            local QuestieText;
             if( QuestieLoader ) then
                 local QuestieFilter = QuestieLoader:ImportModule( 'ChatFilter' );
-                _,Text = QuestieFilter.Filter( Addon.CHAT.ChatFrame,_,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,ChannelNameId,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId );
+                _,QuestieText = QuestieFilter.Filter( Addon.CHAT.ChatFrame,_,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,ChannelNameId,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId );
             end
-            if( Text ) then
-                MessageText = Text;
+            if( QuestieText ) then
+                MessageText = QuestieText;
             end
 
             -- Add AFK/DND flags
@@ -211,7 +211,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             local ChannelLink = '';
             if( tonumber( ChannelId ) > 0 ) then
-                ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..')'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2. Trade - City]|h"
+                ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..')'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2) Trade - City]|h"
             elseif( ChatType == 'PARTY' ) then
                 ChannelLink = "|Hchannel:PARTY|h[Party]|h";
             elseif( ChatType == 'PARTY_LEADER' ) then
@@ -802,12 +802,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             SlashCmdList['JCHAT'] = function( Msg,EditBox )
                 Settings.OpenToCategory( 'jChat' );
             end
+
+            Addon.FRAMES:Notify( 'Done' );
         end
 
         local Iterator = 1;
         local Timer = 10; if( Addon:IsRetail() ) then Timer = 15; end;
         -- todo: solve issue where we can't join channels due to IsFlying()
         -- seems rather silly that the game can't join channels when you log in while flying
+        Addon.FRAMES:Notify( 'Prepping...please wait' );
         hooksecurefunc( 'ChatFrame_RegisterForChannels',function( self,...)
             if( not( Iterator > 1 ) ) then
                 C_Timer.After( Timer,function()
