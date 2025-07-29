@@ -789,7 +789,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Instances[ Key ].BestLevel = Instance.BestLevels[1]+1;
 
                     -- High level
-                    Instances[ Key ].HighLevel = ( Instance.BestLevels[2] or Instance.BestLevels[1] )-1;
+                    Instances[ Key ].HighLevel = Instance.BestLevels[2] or Instance.BestLevels[1];
 
                     -- Name
                     Instances[ Key ].Name = Instances[ Key ].Name or Key;
