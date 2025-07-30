@@ -512,7 +512,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
                 },
                 LBRD = {
                     Abbrevs = {
-                        'brd','lbrd','brdlower','cellblock','brdarena',
+                        'brd','lbrd','brdlower','cellblock','brdarena','windsor',
                     },
                     Description = 'Blackrock Depths Cellblock',
                     LevelBracket = {40,60},
