@@ -157,7 +157,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 _,QuestieText = QuestieFilter.Filter( Addon.CHAT.ChatFrame,_,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,ChannelNameId,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId );
             end
             if( QuestieText ) then
-                MessageText = QuestieText;
+                return;
             end
 
             -- Add AFK/DND flags
@@ -407,7 +407,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
             end
-
             -- Prevent toggled off message types
             local PossibleTypes = {};
             for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
