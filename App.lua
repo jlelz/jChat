@@ -688,6 +688,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Addon.QUESTS:DisableQuestEvents();
             end
             Addon.QUESTS:RebuildQuests();
+            --[[
+            Addon:Dump( {
+                ActiveQuests = Addon.QUESTS.ActiveQuests,
+            } );
+            ]]
 
             -- Chat link clicks
             hooksecurefunc( 'SetItemRef',function( Pattern,FullText )

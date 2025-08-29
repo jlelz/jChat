@@ -4,6 +4,8 @@ Addon.QUESTS = CreateFrame( 'Frame' );
 Addon.QUESTS:RegisterEvent( 'ADDON_LOADED' );
 Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
     if( AddonName == 'jChat' ) then
+
+        local MAX_QUEST_LOG_INDEX = 75;
         --
         --  Accept Quest
         --
@@ -44,13 +46,13 @@ Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.QUESTS.RebuildQuests = function( self )
             self.ActiveQuests = {};
-            local QuestHeaders,QuestEntries;
+            local NumEntries,NumQuests;
             if( Addon:IsClassic() ) then
-                QuestHeaders,QuestEntries = GetNumQuestLogEntries();
+                NumEntries,NumQuests = GetNumQuestLogEntries();
             else
-                QuestHeaders,QuestEntries = C_QuestLog.GetNumQuestLogEntries();
+                NumEntries,NumQuests = C_QuestLog.GetNumQuestLogEntries();
             end
-            for i=1, QuestEntries do
+            for i=1, NumEntries do
                 local QuestTitle,IsHeader;
                 if( Addon:IsClassic() ) then
                     QuestTitle,_,_,IsHeader = GetQuestLogTitle( i );
