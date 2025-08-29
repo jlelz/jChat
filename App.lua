@@ -327,10 +327,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             local OncePerMinute = "%H:%M";
             local OncePerSecond = "%H:%M:%S";
+            local OncePerMillisecond = tostring( GetTime() );
 
             -- My own messages
             if( Addon:Minify( PlayerName ):find( Addon:Minify( MyPlayerName ) ) ) then
-                return Addon:Minify( Player..MessageText..date( OncePerSecond ) );
+                return Addon:Minify( Player..MessageText..OncePerMillisecond );
 
             -- Guild messages
             elseif( Addon:Minify( ChatType ):find( 'guild' ) ) then
