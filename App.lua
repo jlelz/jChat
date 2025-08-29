@@ -439,14 +439,14 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( #WatchedMessages > 0 ) then
                 for i,WatchedMessage in ipairs( WatchedMessages ) do
                     if( Addon:Minify( OriginalText ):find( Addon:Minify( WatchedMessage ) ) ) then
-                        Watched = WatchedMessage;
+                        Watched = '|Alert:'..WatchedMessage;
                     end
                 end
             end
             if( Addon.APP:GetValue( 'QuestAlert' ) ) then
                 for i,ActiveQuest in pairs( Addon.QUESTS.ActiveQuests ) do
                     if( Addon:Minify( OriginalText ):find( ActiveQuest ) ) then
-                        Watched = ActiveQuest;
+                        Watched = '|Quest:'..ActiveQuest;
                     end
                 end
             end
@@ -476,11 +476,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( IsQueued ) then
                     for _,Abbrev in pairs( Dungeons[ ABBREV ].Abbrevs ) do
                         if( Addon:Minify( OriginalText ):find( Addon:Minify( Abbrev ) ) ) then
-                            Watched = Abbrev;
+                            Watched = '|Dungeon:'..ABBREV..'|Abbrev:'..Abbrev;
                         end
                     end
                     if( Addon:Minify( OriginalText ):find( Addon:Minify( ABBREV ) ) ) then
-                        Watched = ABBREV;
+                        Watched = '|Dungeon:'..ABBREV;
                     end
                 end
             end
@@ -489,11 +489,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( IsQueued ) then
                     for _,Abbrev in pairs( Raids[ ABBREV ].Abbrevs ) do
                         if( Addon:Minify( OriginalText ):find( Addon:Minify( Abbrev ) ) ) then
-                            Watched = Abbrev;
+                            Watched = '|Raid:'..ABBREV..'|Abbrev:'..Abbrev;
                         end
                     end
                     if( Addon:Minify( OriginalText ):find( Addon:Minify( ABBREV ) ) ) then
-                        Watched = ABBREV;
+                        Watched = '|Raid:'..ABBREV;
                     end
                 end
             end
