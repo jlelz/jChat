@@ -812,7 +812,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         end
 
         local Iterator = 1;
-        local Timer = 10; if( Addon:IsRetail() ) then Timer = 15; end;
+        local Timer = 10; if( Addon:IsRetail() ) then Timer = 20; end;
         -- todo: solve issue where we can't join channels due to IsFlying()
         -- seems rather silly that the game can't join channels when you log in while flying
         Addon.FRAMES:Notify( 'Prepping...please wait' );

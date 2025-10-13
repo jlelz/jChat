@@ -699,6 +699,11 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     name = 'Scroll Back',
                     desc = 'Extend chat history to 10,000 lines',
                     arg = 'ScrollBack',
+                    set = function( Info,Value )
+                        Addon.APP:SetValue( Info.arg,Value );
+
+                        Addon.CHAT:SetScrolling( Addon.APP:GetValue( 'ScrollBack' ),Addon.CHAT.ChatFrame );
+                    end,
                 };
                 Order = Order+1;
                 Settings.FadeOut = {
@@ -707,6 +712,11 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     name = 'Fade Out',
                     desc = 'Enable/disable chat fading',
                     arg = 'FadeOut',
+                    set = function( Info,Value )
+                        Addon.APP:SetValue( Info.arg,Value );
+
+                        Addon.CHAT:SetFading( Addon.APP:GetValue( 'FadeOut' ),Addon.CHAT.ChatFrame );
+                    end,
                 };
                 Order = Order+1;
                 Settings.ClassColor = {

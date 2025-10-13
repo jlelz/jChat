@@ -13,6 +13,11 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.CHAT.SetFont = function( self,Font,ChatFrame )
             if( Font ) then
+                if( Addon.APP:GetValue( 'Debug' ) ) then
+                    Addon.FRAMES:Debug( 'CHAT.SetFont',Font.Family..'.ttf',Font.Size,Font.Flags );
+                    Addon.FRAMES:Debug( 'CHAT.SetShadowOffset',Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                    Addon.FRAMES:Debug( 'CHAT.SetShadowColor',Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                end
                 ChatFrame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                 ChatFrame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
                 ChatFrame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
@@ -26,6 +31,9 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  string  ChatFrame
         --  @return void
         Addon.CHAT.SetFading = function( self,Value,ChatFrame )
+            if( Addon.APP:GetValue( 'Debug' ) ) then
+                Addon.FRAMES:Debug( 'CHAT.SetFading',tostring( Value ) );
+            end
             ChatFrame:SetFading( Value );
         end
 
@@ -37,7 +45,15 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.CHAT.SetScrolling = function( self,Value,ChatFrame )
             if( Value ) then
+                if( Addon.APP:GetValue( 'Debug' ) ) then
+                    Addon.FRAMES:Debug( 'CHAT.SetMaxLines',10000 );
+                end
                 ChatFrame:SetMaxLines( 10000 );
+            else
+                if( Addon.APP:GetValue( 'Debug' ) ) then
+                    Addon.FRAMES:Debug( 'CHAT.SetMaxLines',128 );
+                end
+                ChatFrame:SetMaxLines( 128 );
             end
         end
 
