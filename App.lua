@@ -815,6 +815,13 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         local Timer = 10; if( Addon:IsRetail() ) then Timer = 20; end;
         -- todo: solve issue where we can't join channels due to IsFlying()
         -- seems rather silly that the game can't join channels when you log in while flying
+        --
+        -- the problem this causes is that since the chat channels are not available,
+        -- their corresponding channel colors in the db get blown away and then we have to
+        -- reconfigure them once we land
+        -- 
+        -- possibly fix in jChat/Chatframe.lua Init(); presumably, that's where the db values
+        -- are wiped during login
         Addon.FRAMES:Notify( 'Prepping...please wait' );
         hooksecurefunc( 'ChatFrame_RegisterForChannels',function( self,...)
             if( not( Iterator > 1 ) ) then
