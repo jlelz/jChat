@@ -511,7 +511,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             ]]
 
-            -- Permission check
+            -- Prevent toggled off channels
             local Allowed = true;
             local Permission;
             if( ChannelId > 0 ) then
@@ -528,6 +528,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Allowed = false;
                 end
 
+                -- Override for monitored messages
                 if( Watched or Mentioned ) then
                     if( Addon.APP:GetValue( 'BypassTypes' ) ) then
                         Allowed = true;
@@ -559,19 +560,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Mentioned
             );
 
-            -- Display
-
             -- Always sound whispers
             if ( ChatType == 'WHISPER' ) then
                 PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
             end
 
-            -- Always sound whispers
+            -- Whispers while afk
             if( ChatType == 'WHISPER' and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ~= true ) then
 
                 if( Addon.APP:GetValue( 'AFKAlert' ) and UnitIsAFK( 'player' ) ) then
-                    PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.APP:GetValue( 'AlertChannel' ) );
-
                     local F = Addon.APP:GetAlertFrame( MessageText,'AFK-Whisper' );
                     local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
                     if( MentionDrop.x and MentionDrop.y ) then
@@ -593,7 +590,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
 
-            -- Always sound mentions
+            -- Mentions
             if( Mentioned and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ~= true ) then
 
                 if( Addon.APP:GetValue( 'MentionAlert' ) ) then
@@ -822,6 +819,8 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         -- 
         -- possibly fix in jChat/Chatframe.lua Init(); presumably, that's where the db values
         -- are wiped during login
+        --
+        -- edit: debugs have been put in place to check on this...
         Addon.FRAMES:Notify( 'Prepping...please wait' );
         hooksecurefunc( 'ChatFrame_RegisterForChannels',function( self,...)
             if( not( Iterator > 1 ) ) then

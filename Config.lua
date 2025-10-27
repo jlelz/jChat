@@ -624,6 +624,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             end,
                             set = function( Info,R,G,B,A )
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
+                                    if( Addon.DB:GetValue( 'Debug' ) ) then
+                                        Addon.FRAMES:Debug( 'Addon.CONFIG:GetSettings()','Calling set() for',Info.arg,'Chat Color' );
+                                    end
                                     Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
                                     local Community,ClubId,StreamId = unpack( Addon:Explode( Info.arg,':' ) );
                                     if( Addon:Minify( Community ) == 'community' ) then
