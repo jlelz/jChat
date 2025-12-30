@@ -822,7 +822,8 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         --
         -- edit: debugs have been put in place to check on this...
         Addon.FRAMES:Notify( 'Prepping...please wait' );
-        hooksecurefunc( 'ChatFrame_RegisterForChannels',function( self,...)
+        Addon.APP:RegisterEvent( 'UPDATE_CHAT_WINDOWS' );
+        Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( not( Iterator > 1 ) ) then
                 C_Timer.After( Timer,function()
 
