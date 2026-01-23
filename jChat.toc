@@ -12,7 +12,7 @@
 ## DefaultState: enabled
 ## SavedVariables: jChat
 
-## Interface: 110207
+## Interface: 120000
 ## Interface-Classic: 11507
 ## Interface-BCC: 20504
 ## Interface-Wrath: 30403
