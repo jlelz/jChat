@@ -930,31 +930,18 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             self.MentionPosition:Hide();
 
             -- Initialize window
-            local AppName = string.upper( 'jChat' );
-            local BlizOptions = LibStub( 'AceConfigDialog-3.0' ).BlizOptions;
-            if( not BlizOptions[ AppName ] ) then
-                BlizOptions[ AppName ] = {};
+            local _, CategoryID = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( AddonName,AddonName );
+            LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( AddonName,self:GetSettings() );
+
+            SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
+            SlashCmdList[ string.upper( AddonName ) ] = function( Msg,EditBox )
+                if( InterfaceOptionsFrame_OpenToCategory ) then
+                    InterfaceOptionsFrame_OpenToCategory( AddonName );
+                    InterfaceOptionsFrame_OpenToCategory( AddonName );
+                else
+                    Settings.OpenToCategory( CategoryID );
+                end
             end
-            local Key = AppName;
-            if( not BlizOptions[ AppName ][ Key ] ) then
-                self.Config = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( AppName,'jChat' );
-
-                LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( AppName,self:GetSettings() );
-            end
-
-            hooksecurefunc( self.Config,'OnCommit',function()
-                -- handle like window close...
-                self.MentionPosition:Hide();
-            end );
-
-            hooksecurefunc( self.Config,'OnRefresh',function()
-                -- handle like window open...
-            end );
-
-            hooksecurefunc( self.Config,'OnDefault',function()
-                --print( 'OnDefault',... )
-                --Addon.CHAT.db:ResetDB();
-            end );
 
         end
 

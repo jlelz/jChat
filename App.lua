@@ -662,7 +662,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( not Addon.DB:GetPersistence() ) then
                 return;
             end
-            self.Name = AddonName;
 
             -- Message cache
             self.Cache = {};
@@ -799,23 +798,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             -- Config callbacks
             Addon.CONFIG:RegisterCallbacks();
-            
-            -- Slash command
-            local Category,Layout;
-            if( Settings and Settings.RegisterCanvasLayoutCategory ) then
-                Category,Layout = Settings.RegisterCanvasLayoutCategory( Addon.CONFIG.Config,self.Name );
-                Settings.RegisterAddOnCategory( Category );
-            end
-
-            SLASH_JMAP1, SLASH_JMAP2 = '/jc', '/jchat';
-            SlashCmdList['JMAP'] = function( Msg,EditBox )
-                if( InterfaceOptionsFrame_OpenToCategory ) then
-                    InterfaceOptionsFrame_OpenToCategory( self.Name );
-                    InterfaceOptionsFrame_OpenToCategory( self.Name );
-                else
-                    Settings.OpenToCategory( Category.ID );
-                end
-            end
 
             Addon.FRAMES:Notify( 'Done' );
         end
