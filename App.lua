@@ -143,10 +143,10 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
 
             -- Replace icon and group tags like {rt4} and {diamond}
-            if( Addon:IsClassic() ) then
-                MessageText = ChatFrame_ReplaceIconAndGroupExpressions( MessageText, IconReplacement, not ChatFrame_CanChatGroupPerformExpressionExpansion( ChatGroup ) );
-            else
+            if( C_ChatInfo and C_ChatInfo.ReplaceIconAndGroupExpressions ) then
                 MessageText = C_ChatInfo.ReplaceIconAndGroupExpressions( MessageText, IconReplacement, not C_ChatInfo.ReplaceIconAndGroupExpressions( ChatGroup ) );
+            else
+                MessageText = ChatFrame_ReplaceIconAndGroupExpressions( MessageText, IconReplacement, not ChatFrame_CanChatGroupPerformExpressionExpansion( ChatGroup ) );
             end
             MessageText = RemoveExtraSpaces( MessageText );
 
