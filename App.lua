@@ -19,7 +19,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
         Addon.APP.GetAlertFrame = function( self,MessageText,Type )
             local BGA,TextA = Addon.APP:GetValue( 'MentionAlpha' ),1;
-            local Frame = Addon.FRAMES:AddMovable( { Name='jChatMention',Label=Type,Value=MessageText,BGA=BGA,TextA=TextA },nil,self );
+            local Frame = Addon.FRAMES:AddAcknowledge( { Name='jChatMention',Label=Type,Value=MessageText,BGA=BGA,TextA=TextA },nil );
             Frame:SetScript( 'OnDragStop',function( self )
                 self:StopMovingOrSizing();
                 self:SetUserPlaced( true );
