@@ -20,11 +20,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.APP.GetAlertFrame = function( self,MessageText,Type )
             local BGA,TextA = Addon.APP:GetValue( 'MentionAlpha' ),1;
             local Frame = Addon.FRAMES:AddAcknowledge( { Name='jChatMention',Label=Type,Value=MessageText,BGA=BGA,TextA=TextA },nil );
-            Frame:SetScript( 'OnDragStop',function( self )
+            Frame:HookScript( 'OnDragStop',function( self )
                 self:StopMovingOrSizing();
                 self:SetUserPlaced( true );
             end );
-            Frame:SetScript( 'OnUpdate',function( self )
+            Frame:HookScript( 'OnUpdate',function( self )
 
                 local BGAlpha = self.Texture:GetAlpha();
 
@@ -579,7 +579,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     AlertLayer = AlertLayer+1;
                     F:SetFrameLevel( AlertLayer );
 
-                    F.Butt:SetScript( 'OnClick',function( self )
+                    F.Butt:HookScript( 'OnClick',function( self )
                         if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
                             Addon.APP.Notices[ Addon:Minify( MessageText ) ] = nil;
                         end
@@ -606,7 +606,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     AlertLayer = AlertLayer+1;
                     F:SetFrameLevel( AlertLayer );
 
-                    F.Butt:SetScript( 'OnClick',function( self )
+                    F.Butt:HookScript( 'OnClick',function( self )
                         if( Addon.APP.Notices and Addon.APP.Notices[ Addon:Minify( MessageText ) ] ) then
                             Addon.APP.Notices[ Addon:Minify( MessageText ) ] = nil;
                         end
@@ -817,7 +817,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         -- edit: debugs have been put in place to check on this...
         Addon.FRAMES:Notify( 'Prepping...please wait' );
         Addon.APP:RegisterEvent( 'UPDATE_CHAT_WINDOWS' );
-        Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
+        Addon.APP:HookScript( 'OnEvent',function( self,Event,AddonName )
             if( not( Iterator > 1 ) ) then
                 C_Timer.After( Timer,function()
 

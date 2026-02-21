@@ -942,7 +942,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Settings.OpenToCategory( CategoryID );
                 end
             end
-
         end
 
         Addon.CONFIG.GetChatFilters = function( self )
