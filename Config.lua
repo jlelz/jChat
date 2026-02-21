@@ -900,7 +900,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.CONFIG.Init = function( self )
 
             -- Setup Mention
-            self.MentionPosition = Addon.FRAMES:AddMovable( {
+            self.MentionPosition = Addon.FRAMES:AddAcknowledge( {
                 Name = 'Mention Alert',
                 Label = 'Mention',
                 Value = 'Mention Alert Position\r Drag to your desired location',
