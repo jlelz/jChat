@@ -277,7 +277,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Settings.MentionAlpha = {
                     type = 'range',
                     order = Order,
-                    name = 'Alert Message Window Alpha',
+                    name = 'Alert Message Alpha',
                     min = 0,max = 1,step = 0.1,
                     set = function( Info,Value )
                         if( Value > 0 ) then
