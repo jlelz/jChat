@@ -231,7 +231,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     set = function( Info,Value )
                         self:SetAliasList( Value );
                     end,
-                    name = 'Alias List',
+                    name = 'Alert Alias List',
                     desc = 'Comma seperated list of aliases for your character name, to be used in mention alerts',
                     arg = 'Aliases',
                     width = 'normal',
@@ -241,11 +241,11 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Settings.MentionMove = {
                     type = 'select',
                     order = Order,
-                    name = 'Move Message Window',
+                    name = 'Position Alert Message Window',
                     desc = 'Reposition message window',
                     values = Addon:ArrayReverse( {
-                        Stop = 0,
-                        Start = 1,
+                        Close = 0,
+                        Open = 1,
                     } ),
                     get = function( Info )
                         local Value;
@@ -277,7 +277,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Settings.MentionAlpha = {
                     type = 'range',
                     order = Order,
-                    name = 'Message Window Alpha',
+                    name = 'Alert Message Window Alpha',
                     min = 0,max = 1,step = 0.1,
                     set = function( Info,Value )
                         if( Value > 0 ) then
@@ -906,6 +906,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Value = 'Mention Alert Position\r Drag to your desired location',
             },UIParent );
             self.MentionPosition:Hide();
+            self.MentionPosition.Butt:Hide();
             self.MentionPosition:SetScript( 'OnDragStop',function( self )
 
                 self:StopMovingOrSizing();
@@ -935,6 +936,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
             SlashCmdList[ string.upper( AddonName ) ] = function( Msg,EditBox )
+                if( InCombatLockdown() ) then
+                    Addon.FRAMES:Error( 'You are in combat' );
+                end
                 if( InterfaceOptionsFrame_OpenToCategory ) then
                     InterfaceOptionsFrame_OpenToCategory( AddonName );
                     InterfaceOptionsFrame_OpenToCategory( AddonName );
