@@ -937,7 +937,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
             SlashCmdList[ string.upper( AddonName ) ] = function( Msg,EditBox )
                 if( InCombatLockdown() ) then
-                    Addon.FRAMES:Error( 'You are in combat' );
+                    Addon.FRAMES:Error( 'You are in combat' );return;
                 end
                 if( InterfaceOptionsFrame_OpenToCategory ) then
                     InterfaceOptionsFrame_OpenToCategory( AddonName );

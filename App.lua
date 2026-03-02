@@ -366,6 +366,11 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             local BNId = select( 13,... );
             local IconReplacement = select( 17,... );
 
+            -- Fucking... Blizzard
+            if( Addon:IsRetail() and InCombatLockdown() ) then
+                return false;
+            end
+
             local Prefix,ABBREV,Queued,_,_,_,Tank,Healer,DPS = strsplit( ':',MessageText );
             local MyPlayerName,MyRealm = UnitName( 'player' );
 
