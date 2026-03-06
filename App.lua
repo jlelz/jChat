@@ -818,6 +818,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Addon.DB:Init();
                     --Addon.DB:Reset();
                     Addon.CHAT:Init();
+                    Addon.CONFIG:Init();
                     Addon.APP:Init();
                     Addon.APP:UnregisterEvent( 'PLAYER_LOGIN' );
                 end );
