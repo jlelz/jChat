@@ -369,7 +369,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- During lockdown, don't filter. Instead, send back to default chat system
             if( ( Addon:IsRetail() and InCombatLockdown() ) or ( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown() ) ) then
                 if( Addon.APP:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'InCombatLockdown','Sending back/not filtering: ',MessageText );
+                    Addon.FRAMES:Debug( 'InCombatLockdown','Sending Back/Not Filtering: ',MessageText );
                 end
                 return false,MessageText, ...
             end
@@ -820,10 +820,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Addon.CHAT:Init();
                 Addon.CONFIG:Init();
                 Addon.APP:Init();
-
-                Addon.FRAMES:Notify( 'Done' );
                 Addon.APP:UnregisterEvent( 'PLAYER_LOGIN' );
-
             end
         end );
         self:UnregisterEvent( 'ADDON_LOADED' );
