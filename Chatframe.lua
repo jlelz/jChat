@@ -13,11 +13,6 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.CHAT.SetFont = function( self,Font,ChatFrame )
             if( Font ) then
-                if( Addon.APP:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'CHAT.SetFont',Font.Family..'.ttf',Font.Size,Font.Flags );
-                    Addon.FRAMES:Debug( 'CHAT.SetShadowOffset',Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-                    Addon.FRAMES:Debug( 'CHAT.SetShadowColor',Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                end
                 ChatFrame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                 ChatFrame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
                 ChatFrame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
@@ -31,9 +26,6 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  string  ChatFrame
         --  @return void
         Addon.CHAT.SetFading = function( self,Value,ChatFrame )
-            if( Addon.APP:GetValue( 'Debug' ) ) then
-                Addon.FRAMES:Debug( 'CHAT.SetFading',tostring( Value ) );
-            end
             ChatFrame:SetFading( Value );
         end
 
@@ -45,14 +37,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.CHAT.SetScrolling = function( self,Value,ChatFrame )
             if( Value ) then
-                if( Addon.APP:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'CHAT.SetMaxLines',10000 );
-                end
                 ChatFrame:SetMaxLines( 10000 );
             else
-                if( Addon.APP:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'CHAT.SetMaxLines',128 );
-                end
                 ChatFrame:SetMaxLines( 128 );
             end
         end
@@ -309,6 +295,20 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Chatframe
             self.ChatFrame = DEFAULT_CHAT_FRAME;
 
+            -- todo: solve issue where we can't join channels due to IsFlying()
+            -- seems rather silly that the game can't join channels when you log in while flying
+            --
+            -- the problem this causes is that since the chat channels are not available,
+            -- their corresponding channel colors in the db get blown away and then we have to
+            -- reconfigure them once we land
+            -- 
+            -- possibly fix in jChat/Chatframe.lua Init(); presumably, that's where the db values
+            -- are wiped during login
+            --
+            -- edit: debugs have been put in place to check on this...
+            -- edit: commented out the persistence update below. can't remember why we are re-init anyway
+
+            --[[
             -- Initialize channel persistence
             local PreviousChannelPersistence = Addon.DB:GetPersistence().Channels;
             Addon.DB:GetPersistence().Channels = {};
@@ -332,22 +332,20 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Addon.DB:GetPersistence().Channels[ Key ] = Addon.DB:GetPersistence().Channels[ Key ] or {};
                 Addon.DB:GetPersistence().Channels[ Key ].Id = ChannelData.Id;
                 Addon.DB:GetPersistence().Channels[ Key ].Name = Key;
-                Addon.DB:GetPersistence().Channels[ Key ].Color = self:GetBaseColor();
-                Addon.DB:GetPersistence().Channels[ Key ].Allowed = true;
 
-                if( Addon.DB:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'Addon.CHAT:Init()',Key,'Channel Color Set to Default' );
-                end
-                if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Color ) then
+                if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Color ~= nil ) then
                     Addon.DB:GetPersistence().Channels[ Key ].Color = PreviousChannelPersistence[ Key ].Color;
-                    if( Addon.DB:GetValue( 'Debug' ) ) then
-                        Addon.FRAMES:Debug( 'Addon.CHAT:Init()',Key,'Channel Custom Color Applied' );
-                    end
+                else
+                    Addon.DB:GetPersistence().Channels[ Key ].Color = self:GetBaseColor();
                 end
+
                 if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Allowed ~= nil ) then
                     Addon.DB:GetPersistence().Channels[ Key ].Allowed = PreviousChannelPersistence[ Key ].Allowed;
+                else
+                    Addon.DB:GetPersistence().Channels[ Key ].Allowed = true;
                 end
             end
+            ]]
 
             -- Update chat options
             for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
