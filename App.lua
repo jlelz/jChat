@@ -814,13 +814,13 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.APP:RegisterEvent( 'PLAYER_LOGIN' );
         Addon.APP:HookScript( 'OnEvent',function( self,Event,AddonName )
             if( Event == 'PLAYER_LOGIN' ) then
-                Addon.DB:Init();
-                --Addon.DB:Reset();
-
-                Addon.CHAT:Init();
-                Addon.CONFIG:Init();
-                Addon.APP:Init();
-                Addon.APP:UnregisterEvent( 'PLAYER_LOGIN' );
+                C_Timer.After( 5,function()
+                    Addon.DB:Init();
+                    --Addon.DB:Reset();
+                    Addon.CHAT:Init();
+                    Addon.APP:Init();
+                    Addon.APP:UnregisterEvent( 'PLAYER_LOGIN' );
+                end );
             end
         end );
         self:UnregisterEvent( 'ADDON_LOADED' );
