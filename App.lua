@@ -132,34 +132,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             --print( C_FriendList.SendWho( PlayerRealm ) );
 
-            -- Chat color
-            local ChannelColor = {
-                r = Info.r,
-                g = Info.g,
-                b = Info.b,
-                a = 1,
-            };
-            local Channels = Addon.DB:GetPersistence().Channels;
-            if( tonumber( ChannelId ) > 0 ) then
-                if( Channels[ ChannelName ] and Channels[ ChannelName ].Color ) then
-                    ChannelColor.r,ChannelColor.g,ChannelColor.b,ChannelColor.a = unpack( Channels[ ChannelName ].Color );
-                end
-            end
-            local HighLightColor = {};
-            if( Watched or Mentioned ) then
-                HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.APP:GetValue( 'AlertColor' ) );
-            end
-            ChatTypeInfo[ ChatType ] = ChatTypeInfo[ ChatType ] or {
-                r = Info.r,
-                g = Info.g,
-                b = Info.b,
-                a = 1,
-            };
-            ChatTypeInfo[ ChatType ].r,
-            ChatTypeInfo[ ChatType ].g,
-            ChatTypeInfo[ ChatType ].b,
-            ChatTypeInfo[ ChatType ].a = ChannelColor.r,ChannelColor.g,ChannelColor.b,ChannelColor.a;
-
             -- Class color
             if( PlayerName and Addon.APP:GetValue( 'ColorNamesByClass' ) ) then
                 PlayerName = ChatFrameUtil.GetDecoratedSenderName( Event,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,Arg7,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId,Arg14,LBox,IconReplacement );
@@ -199,6 +171,30 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             TimeStamp = CreateColor( unpack( Addon.APP:GetValue( 'TimeColor' ) ) ):WrapTextInColorCode( TimeStamp );
 
+            -- Set Channel Color via DB Colors
+            local ChannelColor = {
+                r = Info.r,
+                g = Info.g,
+                b = Info.b,
+                a = 1,
+            };
+            local Channels = Addon.DB:GetPersistence().Channels;
+            if( tonumber( ChannelId ) > 0 ) then
+                if( Channels[ ChannelName ] and Channels[ ChannelName ].Color ) then
+                    ChannelColor.r,ChannelColor.g,ChannelColor.b,ChannelColor.a = unpack( Channels[ ChannelName ].Color );
+                end
+            end
+            ChatTypeInfo[ ChatType ] = ChatTypeInfo[ ChatType ] or {
+                r = Info.r,
+                g = Info.g,
+                b = Info.b,
+                a = 1,
+            };
+            ChatTypeInfo[ ChatType ].r,
+            ChatTypeInfo[ ChatType ].g,
+            ChatTypeInfo[ ChatType ].b,
+            ChatTypeInfo[ ChatType ].a = ChannelColor.r,ChannelColor.g,ChannelColor.b,ChannelColor.a;
+
             -- Channel link
             -- https://wowpedia.fandom.com/wiki/Hyperlinks
             -- https://wowwiki-archive.fandom.com/wiki/ItemLink
@@ -227,6 +223,8 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             elseif( ChatType == 'GUILD' ) then
                 ChannelLink = "|Hchannel:GUILD|h[Guild]|h";
             end
+
+            -- Now we have a link, color it
             local TypeColor = ChatTypeInfo[ ChatType ];
             if( TypeColor ) then
                 ChannelLink = CreateColor( TypeColor.r,TypeColor.g,TypeColor.b ):WrapTextInColorCode( ChannelLink );
@@ -300,6 +298,12 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             );
             if( QuestieText ) then
                 return;
+            end
+
+            -- Highlight colors
+            local HighLightColor = {};
+            if( Watched or Mentioned ) then
+                HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.APP:GetValue( 'AlertColor' ) );
             end
 
             -- Partial highlight
@@ -841,7 +845,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                 local ChannelLink = Channel.Id..')'..Channel.Name;
                 if( tonumber( Channel.Id ) > 0 ) then
-                    ChannelLink = "|Hchannel:channel:"..Channel.Id.."|h["..Channel.Id..']'..Channel.Name.."]|h"    -- "|Hchannel:channel:2|h[2. Trade - City]|h"s
+                    ChannelLink = "|Hchannel:channel:"..Channel.Id.."|h[["..Channel.Id..']'..Channel.Name.."]|h"    -- "|Hchannel:channel:2|h[2. Trade - City]|h"s
                 end
 
                 local r,g,b,a,id = 1,1,1,1,nil;
