@@ -83,6 +83,28 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             };
         end
 
+        Addon.APP.GetChannelLink = function( self,ChannelId,ChannelBaseName,ChatType )
+            local ChannelLink = '';
+            if( tonumber( ChannelId ) > 0 ) then
+                ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..']'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2) Trade - City]|h"
+            elseif( ChatType == 'PARTY' ) then
+                ChannelLink = "|Hchannel:PARTY|h[Party]|h";
+            elseif( ChatType == 'PARTY_LEADER' ) then
+                ChannelLink = "|Hchannel:PARTY|h[Party Leader]|h";
+            elseif( ChatType == 'INSTANCE_CHAT' ) then
+                ChannelLink = "|Hchannel:INSTANCE_CHAT|h[Instance]|h";
+            elseif( ChatType == 'INSTANCE_CHAT_LEADER' ) then
+                ChannelLink = "|Hchannel:INSTANCE_CHAT|h[Instance Leader]|h";
+            elseif( ChatType == 'RAID' ) then
+                ChannelLink = "|Hchannel:RAID|h[Raid]|h";
+            elseif( ChatType == 'RAID_LEADER' or ChatType == 'RAID_WARNING' ) then
+                ChannelLink = "|Hchannel:RAID|h[Raid Leader]|h";
+            elseif( ChatType == 'GUILD' ) then
+                ChannelLink = "|Hchannel:GUILD|h[Guild]|h";
+            end
+            return ChannelLink;
+        end
+
         --
         --  Format Chat Message
         --
@@ -205,24 +227,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 local ClubDisplayName = Addon.CHAT:GetClubName( StreamId..':'..ClubId );
                 ChannelBaseName = ClubDisplayName;
             end
-            local ChannelLink = '';
-            if( tonumber( ChannelId ) > 0 ) then
-                ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..']'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2) Trade - City]|h"
-            elseif( ChatType == 'PARTY' ) then
-                ChannelLink = "|Hchannel:PARTY|h[Party]|h";
-            elseif( ChatType == 'PARTY_LEADER' ) then
-                ChannelLink = "|Hchannel:PARTY|h[Party Leader]|h";
-            elseif( ChatType == 'INSTANCE_CHAT' ) then
-                ChannelLink = "|Hchannel:INSTANCE_CHAT|h[Instance]|h";
-            elseif( ChatType == 'INSTANCE_CHAT_LEADER' ) then
-                ChannelLink = "|Hchannel:INSTANCE_CHAT|h[Instance Leader]|h";
-            elseif( ChatType == 'RAID' ) then
-                ChannelLink = "|Hchannel:RAID|h[Raid]|h";
-            elseif( ChatType == 'RAID_LEADER' or ChatType == 'RAID_WARNING' ) then
-                ChannelLink = "|Hchannel:RAID|h[Raid Leader]|h";
-            elseif( ChatType == 'GUILD' ) then
-                ChannelLink = "|Hchannel:GUILD|h[Guild]|h";
-            end
+            local ChannelLink = Addon.APP:GetChannelLink( ChannelId,ChannelBaseName,ChatType );
 
             -- Now we have a link, color it
             local TypeColor = ChatTypeInfo[ ChatType ];
@@ -774,12 +779,12 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             -- Chat link clicks
             hooksecurefunc( 'SetItemRef',function( Pattern,FullText )
-                local linkType,addon,param1 = strsplit( ':',Pattern );
-                if( linkType == 'addon' and addon == 'jChat' ) then
-                    if( param1 == 'url' ) then
-                        Addon.CHAT.ChatFrame.editBox:SetText( FullText:match( ">(.-)<" ) );
-
-                        ChatEdit_ActivateChat( Addon.CHAT.ChatFrame.editBox );
+                local linkType,ThisAddon,Param = strsplit( ':',Pattern );
+                if( linkType == 'addon' and ThisAddon == 'jChat' ) then
+                    if( Param == 'url' ) then
+                        local EditBox = ChatEdit_ChooseBoxForSend( Addon.CHAT.ChatFrame );
+                        ChatEdit_ActivateChat( EditBox );
+                        EditBox:SetText( FullText:match( ">(.-)<" ) );
                     end
                 end
             end );
