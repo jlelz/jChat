@@ -841,7 +841,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                 local ChannelLink = Channel.Id..')'..Channel.Name;
                 if( tonumber( Channel.Id ) > 0 ) then
-                    ChannelLink = "|Hchannel:channel:"..Channel.Id.."|h["..Channel.Id..')'..Channel.Name.."]|h"    -- "|Hchannel:channel:2|h[2. Trade - City]|h"s
+                    ChannelLink = "|Hchannel:channel:"..Channel.Id.."|h["..Channel.Id..']'..Channel.Name.."]|h"    -- "|Hchannel:channel:2|h[2. Trade - City]|h"s
                 end
 
                 local r,g,b,a,id = 1,1,1,1,nil;
