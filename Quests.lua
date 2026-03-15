@@ -92,6 +92,20 @@ Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
             self.QuestEvents:UnregisterEvent( 'QUEST_ACCEPTED' );
             self.QuestEvents:UnregisterEvent( 'QUEST_TURNED_IN' );
         end
+
+        --
+        --  Questie Support
+        --
+        --  @return string
+        Addon.QUESTS.QuestieFilter = function( self,ChatFrame,... )
+            local QuestieText;
+            if( QuestieLoader ) then
+                QuestieLoader:ImportModule( 'ChatFilter' );
+
+                _,QuestieText = QuestieFilter.Filter( Addon.CHAT.ChatFrame,_,... );
+            end
+            return QuestieText;
+        end
         
         self:UnregisterEvent( 'ADDON_LOADED' );
     end

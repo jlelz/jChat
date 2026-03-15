@@ -1,5 +1,33 @@
 local _, Addon = ...;
 
+local ChatFrameUtil = ChatFrameUtil;
+local C_Club = C_Club;
+local C_ChatInfo = C_ChatInfo;
+local C_PartyInfo = C_PartyInfo;
+local GetPlayerInfoByGUID = GetPlayerInfoByGUID;
+local GMChatFrame_IsGM = GMChatFrame_IsGM;
+local GetChannelName = GetChannelName;
+local BetterDate = BetterDate;
+local PlaySound = PlaySound;
+local CreateColor = CreateColor;
+local RemoveExtraSpaces = RemoveExtraSpaces;
+local SOUNDKIT = SOUNDKIT;
+local InviteUnit = InviteUnit;
+local ChatEdit_ActivateChat = ChatEdit_ActivateChat;
+local ToggleChatColorNamesByClassGroup = ToggleChatColorNamesByClassGroup;
+local ChatTypeInfo = ChatTypeInfo;
+local InCombatLockdown = InCombatLockdown;
+
+local strsub = strsub;
+local unpack = unpack;
+local tonumber = tonumber;
+local tostring = tostring;
+local ipairs = ipairs;
+local pairs = pairs;
+
+-- fallbacks
+local ChatFrame_ReplaceIconAndGroupExpressions = ChatFrame_ReplaceIconAndGroupExpressions;
+
 Addon.APP = CreateFrame( 'Frame' );
 Addon.APP:RegisterEvent( 'ADDON_LOADED' );
 Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
@@ -72,7 +100,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  bool    Mentioned
         --  @return list
         local AlertLayer = 1;
-        Addon.APP.Format = function( Event,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId,IconReplacement,Watched,Mentioned )
+        Addon.APP.Format = function( Event,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,Arg7,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId,Arg14,LBox,IconReplacement,Watched,Mentioned )
             local OriginalText = MessageText;
             local ChatType = strsub( Event,10 );
             local Info = ChatTypeInfo[ ChatType ];
@@ -92,7 +120,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
             ChannelName = GetName( ChannelId ) or ChannelName;
-            local ChatGroup = Chat_GetChatCategory( ChatType );
+            local ChatGroup = ChatFrameUtil.GetChatCategory( ChatType );
 
             -- Player info
             local LocalizedClass,EnglishClass,LocalizedRace,EnglishRace,Sex,Name,Server;
@@ -134,51 +162,23 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             -- Class color
             if( PlayerName and Addon.APP:GetValue( 'ColorNamesByClass' ) ) then
-                if( EnglishClass ) then
-                    local ClassColorTable = RAID_CLASS_COLORS[ EnglishClass ];
-                    if ( ClassColorTable ) then
-                        PlayerName = string.format( "\124cff%.2x%.2x%.2x", ClassColorTable.r*255, ClassColorTable.g*255, ClassColorTable.b*255 )..PlayerName.."\124r";
-                    end
-                end
+                PlayerName = ChatFrameUtil.GetDecoratedSenderName( Event,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,Arg7,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId,Arg14,LBox,IconReplacement );
             end
 
             -- Replace icon and group tags like {rt4} and {diamond}
             if( C_ChatInfo and C_ChatInfo.ReplaceIconAndGroupExpressions ) then
-                MessageText = C_ChatInfo.ReplaceIconAndGroupExpressions( MessageText, IconReplacement, not C_ChatInfo.ReplaceIconAndGroupExpressions( ChatGroup ) );
+                MessageText = C_ChatInfo.ReplaceIconAndGroupExpressions( MessageText, IconReplacement, not C_ChatInfo.ReplaceIconAndGroupExpressions( ChatGroup ) );                
             else
                 MessageText = ChatFrame_ReplaceIconAndGroupExpressions( MessageText, IconReplacement, not ChatFrame_CanChatGroupPerformExpressionExpansion( ChatGroup ) );
             end
             MessageText = RemoveExtraSpaces( MessageText );
 
-            -- Questie support
-            local QuestieText;
-            if( QuestieLoader ) then
-                local QuestieFilter = QuestieLoader:ImportModule( 'ChatFilter' );
-                _,QuestieText = QuestieFilter.Filter( Addon.CHAT.ChatFrame,_,MessageText,PlayerRealm,LangHeader,ChannelNameId,PlayerName,GMFlag,ChannelNameId,ChannelId,ChannelBaseName,UnUsed,LineId,PlayerId,BNId );
-            end
-            if( QuestieText ) then
+            -- Add AFK/DND flags
+            local PFlag = ChatFrameUtil.GetPFlag( GMFlag,ChannelId,ChannelBaseName );
+            if ( ChatType == 'WHISPER_INFORM' and GMChatFrame_IsGM and GMChatFrame_IsGM( PlayerRealm ) ) then
                 return;
             end
 
-            -- Add AFK/DND flags
-            local PFlag;
-            if( GMFlag ~= '' ) then
-                if( GMFlag == 'GM' ) then
-                    --If it was a whisper, dispatch it to the GMChat addon.
-                    if ( ChatType == 'WHISPER' ) then
-                        return;
-                    end
-                    --Add Blizzard Icon, this was sent by a GM
-                    PFlag = "|TInterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16|t ";
-                elseif ( GMFlag == 'DEV' ) then
-                    --Add Blizzard Icon, this was sent by a Dev
-                    PFlag = "|TInterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16|t ";
-                else
-                    PFlag = _G["CHAT_FLAG_"..GMFlag];
-                end
-            else
-                PFlag = '';
-            end
             local PlayerAction = '';
             if( ChatType == 'YELL' ) then
                 PlayerAction = ' yells';
@@ -211,7 +211,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             local ChannelLink = '';
             if( tonumber( ChannelId ) > 0 ) then
-                ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..')'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2) Trade - City]|h"
+                ChannelLink = "|Hchannel:channel:"..ChannelId.."|h["..ChannelId..']'..ChannelBaseName.."]|h"    -- "|Hchannel:channel:2|h[2) Trade - City]|h"
             elseif( ChatType == 'PARTY' ) then
                 ChannelLink = "|Hchannel:PARTY|h[Party]|h";
             elseif( ChatType == 'PARTY_LEADER' ) then
@@ -238,7 +238,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Player level
             local PlayerLevel = '';--'['..UnitLevel( PlayerId )..']';
 
-            -- Event messages
+            -- Blizz format()'s Special Event Messages
             -- CHAT_MSG_CHANNEL_NOTICE_USER 
             -- https://github.com/tekkub/wow-globalstrings/blob/master/GlobalStrings/enUS.lua
             -- file is super old but works. i ran /dump CHAT_SET_MODERATOR_NOTICE to test
@@ -251,9 +251,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 MessageText = CHAT_CHANNEL_LEAVE_GET:format( PlayerLink );
             elseif( Event == 'CHAT_MSG_CHANNEL_NOTICE_USER' ) then
                 local GlobalString = _G["CHAT_"..ChatType.."_NOTICE_BN"];
-                if( not GlobalString ) then
-                    GlobalString = _G["CHAT_"..ChatType.."_NOTICE"];
-                end
                 if( not GlobalString ) then
                     GlobalString = _G["CHAT_"..ChatType.."_NOTICE"];
                 end
@@ -284,6 +281,25 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end );
                     end
                 end
+            end
+            -- Questie support
+            local QuestieText = Addon.QUESTS:QuestieFilter( Addon.CHAT.ChatFrame,
+                MessagePrefix..MessageText,
+                PlayerRealm,
+                LangHeader,
+                ChannelNameId,
+                PlayerName,
+                GMFlag,
+                ChannelNameId,
+                ChannelId,
+                ChannelBaseName,
+                UnUsed,
+                LineId,
+                PlayerId,
+                BNId 
+            );
+            if( QuestieText ) then
+                return;
             end
 
             -- Partial highlight
@@ -343,6 +359,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
         end
 
+        Addon.APP.CheckDiscardedMessage = function( self,Event,... )
+            local shouldDiscardMessage = false;
+                shouldDiscardMessage = ChatFrameUtil.ProcessMessageEventFilters( self,Event,... );
+
+            if shouldDiscardMessage then
+                return true;
+            end
+            return false;
+        end
         --
         --  Filter Chat Message
         --
@@ -358,24 +383,147 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             local ChannelNameId = select( 4,... );
             local PlayerName = select( 5,... );
             local GMFlag = select( 6,... );
+            local Arg7 = select( 7,... ); 
             local ChannelId = select( 8,... );
             local ChannelBaseName = select( 9,... );
             local UnUsed = select( 10,... );
             local LineId = select( 11,... );
             local PlayerId = select( 12,... );
             local BNId = select( 13,... );
+            local Arg14 = select( 14,... );
+            local LBox = select( 16,... );
             local IconReplacement = select( 17,... );
+            local MyPlayerName,MyRealm = UnitName( 'player' );
 
             -- During lockdown, don't filter. Instead, send back to default chat system
             if( ( Addon:IsRetail() and InCombatLockdown() ) or ( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown() ) ) then
                 if( Addon.APP:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'InCombatLockdown','Sending Back/Not Filtering: ',MessageText );
+                    Addon.FRAMES:Debug( 'InCombatLockdown','Sending Back/Not Filtering:',tostring( MessageText ) );
                 end
-                return false,MessageText, ...
+                return false,MessageText,PlayerName,...
             end
 
-            local Prefix,ABBREV,Queued,_,_,_,Tank,Healer,DPS = strsplit( ':',MessageText );
-            local MyPlayerName,MyRealm = UnitName( 'player' );
+            -- Retail Chat /Interface/AddOns/Blizzard_ChatFrameBase/Mainline/ChatFrameOverrides.lua 
+
+            -- Cinematic
+            if( LBox) then
+                return true;
+            end
+            -- Discarded
+            local DiscardMessage = Addon.APP:CheckDiscardedMessage( self,Event,... );
+            if( DiscardMessage ) then
+                return true;
+            end
+            -- Supressed
+            local ChatGroup = ChatFrameUtil.GetChatCategory( ChatType );
+            local ChatTarget = FCFManager_GetChatTarget( ChatGroup,PlayerRealm,ChannelId );
+            if( FCFManager_ShouldSuppressMessage( self,ChatGroup,ChatTarget ) ) then
+                return true;
+            end
+            -- God Awful
+            if ( ChatGroup == "WHISPER" or ChatGroup == "BN_WHISPER" ) then
+                if ( self.privateMessageList and not self.privateMessageList[strlower(PlayerRealm)] ) then
+                    return true;
+                elseif ( self.excludePrivateMessageList and self.excludePrivateMessageList[strlower(PlayerRealm)]
+                    and ( (ChatGroup == "WHISPER" and GetCVar("whisperMode") ~= "popout_and_inline") or (ChatGroup == "BN_WHISPER" and GetCVar("whisperMode") ~= "popout_and_inline") ) ) then
+                    return true;
+                end
+            end
+            if (self.privateMessageList) then
+                -- Dedicated BN whisper windows need online/offline messages for only that player
+                if ( (ChatGroup == "BN_INLINE_TOAST_ALERT" or ChatGroup == "BN_WHISPER_PLAYER_OFFLINE") and not self.privateMessageList[strlower(PlayerRealm)] ) then
+                    return true;
+                end
+
+                -- HACK to put certain system messages into dedicated whisper windows
+                if ( ChatGroup == "SYSTEM") then
+                    local matchFound = false;
+                    local message = strlower(MessageText);
+                    for playerName, _ in pairs(self.privateMessageList) do
+                        local playerNotFoundMsg = strlower(format(ERR_CHAT_PLAYER_NOT_FOUND_S, PlayerName));
+                        local charOnlineMsg = strlower(format(ERR_FRIEND_ONLINE_SS, PlayerName, PlayerName));
+                        local charOfflineMsg = strlower(format(ERR_FRIEND_OFFLINE_S, PlayerName));
+                        if ( message == playerNotFoundMsg or message == charOnlineMsg or message == charOfflineMsg) then
+                            matchFound = true;
+                            break;
+                        end
+                    end
+
+                    if (not matchFound) then
+                        return true;
+                    end
+                end
+            end
+
+            -- Prevent ignored messages
+            local IgnoredMessages = Addon.CONFIG:GetIgnores();
+            if( #IgnoredMessages > 0 ) then
+                for i,IgnoredMessage in ipairs( IgnoredMessages ) do
+                    if( Addon:Minify( OriginalText ):find( Addon:Minify( IgnoredMessage ) ) ) then
+                        if( not Addon:Minify( PlayerName ):find( Addon:Minify( MyPlayerName ) ) ) then
+                            return true;
+                        end
+                    end
+                end
+                for i,IgnoredIdiot in ipairs( IgnoredMessages ) do
+                    if( Addon:Minify( PlayerName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
+                        return true;
+                    end
+                end
+            end
+
+            -- Prevent toggled off message types
+            local PossibleTypes = {};
+            for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
+                for i,MessageType in pairs( MessageTypes ) do
+                    PossibleTypes[ MessageType ] = Type;
+                end
+            end
+            local Values = Addon.APP:GetValue( 'ChatGroups' );
+            if( PossibleTypes[ Event ] and not Values[ PossibleTypes[ Event ] ] ) then
+                --print( 'stopped sending',Event,MessageText )
+                return true;
+            end
+
+            -- GM check
+            if( GMFlag == 'GM' and ChatType == 'WHISPER' ) then
+                return;
+            end
+
+            -- Prevent repeat messages
+            local CacheKey = Addon.APP:GetCacheKey( ... );
+            if( Addon.APP.Cache[ CacheKey ] ) then
+                return true;
+            end
+
+            -- Prevent toggled off channels
+            local Allowed = true;
+            local Permission;
+            if( ChannelId > 0 ) then
+                Permission = Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ] or false;
+
+                if( not Permission ) then
+                    if( Addon:Minify( ChannelBaseName ):find( 'trade' ) ) then
+                        Permission = Addon.APP:GetValue( 'Channels' )[ 'Trade' ];
+                    end
+                end
+
+                if( Permission and Permission.Allowed == false ) then
+                    --print( 'blocking',ChannelBaseName )
+                    Allowed = false;
+                end
+
+                -- Override for monitored messages
+                if( Watched or Mentioned ) then
+                    if( Addon.APP:GetValue( 'BypassTypes' ) ) then
+                        Allowed = true;
+                    end
+                end
+
+                if( not Allowed ) then
+                    return true;
+                end
+            end
 
             -- Invite check
             if( ChatType == 'WHISPER' and Addon.APP:GetValue( 'AutoInvite' ) ) then
@@ -400,47 +548,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
 
-            -- Prevent ignored messages
-            local IgnoredMessages = Addon.CONFIG:GetIgnores();
-            if( #IgnoredMessages > 0 ) then
-                for i,IgnoredMessage in ipairs( IgnoredMessages ) do
-                    if( Addon:Minify( OriginalText ):find( Addon:Minify( IgnoredMessage ) ) ) then
-                        if( not Addon:Minify( PlayerName ):find( Addon:Minify( MyPlayerName ) ) ) then
-                            return true;
-                        end
-                    end
-                end
-                for i,IgnoredIdiot in ipairs( IgnoredMessages ) do
-                    if( Addon:Minify( PlayerName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
-                        return true;
-                    end
-                end
-            end
-            -- Prevent toggled off message types
-            local PossibleTypes = {};
-            for Type,MessageTypes in pairs( Addon.CONFIG:GetChatFilters() ) do
-                for i,MessageType in pairs( MessageTypes ) do
-                    PossibleTypes[ MessageType ] = Type;
-                end
-            end
-            local Values = Addon.APP:GetValue( 'ChatGroups' );
-            if( PossibleTypes[ Event ] and not Values[ PossibleTypes[ Event ] ] ) then
-                --print( 'stopped sending',Event,MessageText )
-                return true;
-            end
-
-            -- GM check
-            if( GMFlag == 'GM' and ChatType == 'WHISPER' ) then
-                return;
-            end
-
-            -- Prevent repeat messages
-            local CacheKey = Addon.APP:GetCacheKey( ... );
-            if( Addon.APP.Cache[ CacheKey ] ) then
-                return true;
-            end
-            Addon.APP.Cache[ CacheKey ] = true;
-
             -- Watch check
             local Watched,Mentioned = false,false;
             local WatchedMessages = Addon.CONFIG:GetAlerts();
@@ -458,6 +565,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
             end
+            local Prefix,ABBREV,Queued,_,_,_,Tank,Healer,DPS = strsplit( ':',MessageText );
             if( Addon.APP:GetValue( 'MentionAlert' ) ) then
                 if( Addon:Minify( OriginalText ):find( Addon:Minify( MyPlayerName ) ) ) then
                     Mentioned = MyPlayerName;
@@ -505,48 +613,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
             end
-            --[[
-            if( Prefix and Prefix == Addon.DUNGEONS.PREFIX ) then
-                local ChannelId;
-                for i,Channel in pairs( Addon.CHAT:GetChannels() ) do
-                    if( Channel.Name == Addon.DUNGEONS.CHANNEL_NAME ) then
-                        ChannelId = Channel.Id;
-                    end
-                end
-                if( ChannelId ) then
-                    Addon.DUNGEONS:OnCommReceived( Prefix,MessageText,'CHANNEL',ChannelId );
-                end
-            end
-            ]]
-
-            -- Prevent toggled off channels
-            local Allowed = true;
-            local Permission;
-            if( ChannelId > 0 ) then
-                Permission = Addon.APP:GetValue( 'Channels' )[ ChannelBaseName ] or false;
-
-                if( not Permission ) then
-                    if( Addon:Minify( ChannelBaseName ):find( 'trade' ) ) then
-                        Permission = Addon.APP:GetValue( 'Channels' )[ 'Trade' ];
-                    end
-                end
-
-                if( Permission and Permission.Allowed == false ) then
-                    --print( 'blocking',ChannelBaseName )
-                    Allowed = false;
-                end
-
-                -- Override for monitored messages
-                if( Watched or Mentioned ) then
-                    if( Addon.APP:GetValue( 'BypassTypes' ) ) then
-                        Allowed = true;
-                    end
-                end
-
-                if( not Allowed ) then
-                    return true;
-                end
-            end
 
             -- Format message
             MessageText,r,g,b,a,id = Addon.APP.Format(
@@ -557,12 +623,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 ChannelNameId,
                 PlayerName,
                 GMFlag,
+                Arg7,
                 ChannelId,
                 ChannelBaseName,
                 UnUsed,
                 LineId,
                 PlayerId,
                 BNId,
+                Arg14,
+                LBox,
                 IconReplacement,
                 Watched,
                 Mentioned
@@ -626,7 +695,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
 
             Addon.CHAT.ChatFrame:AddMessage( MessageText,r,g,b,id );
-
+            Addon.APP.Cache[ CacheKey ] = true;
             return true;
         end;
 
@@ -721,7 +790,8 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     else
                         local Groups = self:GetValue( 'ChatGroups' );
                         if( Groups ) then
-                            Addon.CHAT:SetGroup( GroupName,Groups[ Group ] );
+                            local Boolean = Groups[ Group ];
+                            Addon.CHAT:SetGroup( GroupName,Boolean );
                             ToggleChatColorNamesByClassGroup( Groups[ Group ],GroupName );
                         end
                     end
@@ -806,6 +876,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             -- Config callbacks
             Addon.CONFIG:RegisterCallbacks();
+            Addon.CHAT:RegisterCallbacks();
 
             Addon.FRAMES:Notify( 'Done' );
         end

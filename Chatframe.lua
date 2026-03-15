@@ -1,4 +1,12 @@
 local _, Addon = ...;
+local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME;
+local JoinPermanentChannel = JoinPermanentChannel;
+local LeaveChannelByName = LeaveChannelByName;
+local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS;
+local GetChannelList = GetChannelList;
+local CreateColor = CreateColor;
+local ChangeChatColor = ChangeChatColor;
+local C_Club = C_Club;
 
 Addon.CHAT = CreateFrame( 'Frame' );
 Addon.CHAT:RegisterEvent( 'ADDON_LOADED' );
@@ -104,7 +112,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  Leave channel
         --
         --  @return void
-        Addon.CHAT.LeaveChannel = function( self,ChannelName )
+        Addon.CHAT.LeaveChannelByName = function( self,ChannelName )
             if( ChannelName ) then
                 if( self:IsChannelJoined( ChannelName ) ) then
 
@@ -291,66 +299,37 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --
         --  @return void
         Addon.CHAT.Init = function( self )
-
             -- Chatframe
             self.ChatFrame = DEFAULT_CHAT_FRAME;
-
-            -- todo: solve issue where we can't join channels due to IsFlying()
-            -- seems rather silly that the game can't join channels when you log in while flying
-            --
-            -- the problem this causes is that since the chat channels are not available,
-            -- their corresponding channel colors in the db get blown away and then we have to
-            -- reconfigure them once we land
-            -- 
-            -- possibly fix in jChat/Chatframe.lua Init(); presumably, that's where the db values
-            -- are wiped during login
-            --
-            -- edit: debugs have been put in place to check on this...
-            -- edit: commented out the persistence update below. can't remember why we are re-init anyway
-
-            --[[
-            -- Initialize channel persistence
-            local PreviousChannelPersistence = Addon.DB:GetPersistence().Channels;
-            Addon.DB:GetPersistence().Channels = {};
-            for Id,ChannelData in pairs( self:GetChannels() ) do
-                local Club;
-                local ClubData = Addon:Explode( ChannelData.Name,':' );
-                if( ClubData and tonumber( #ClubData ) > 0 ) then
-                    local ClubId = ClubData[2] or 0;
-                    if( tonumber( ClubId ) > 0 ) then
-                        Club = C_Club.GetClubInfo( ClubId );
-                    end
-                end
-                local Key = ChannelData.Name;
-                if( Club ) then
-                    Key = Club.name;
-                    Key = Key:gsub( '%s+','' );
-
-                    Addon.DB:GetPersistence().Channels[ Key ] = Addon.DB:GetPersistence().Channels[ Key ] or {};
-                end
-
-                Addon.DB:GetPersistence().Channels[ Key ] = Addon.DB:GetPersistence().Channels[ Key ] or {};
-                Addon.DB:GetPersistence().Channels[ Key ].Id = ChannelData.Id;
-                Addon.DB:GetPersistence().Channels[ Key ].Name = Key;
-
-                if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Color ~= nil ) then
-                    Addon.DB:GetPersistence().Channels[ Key ].Color = PreviousChannelPersistence[ Key ].Color;
-                else
-                    Addon.DB:GetPersistence().Channels[ Key ].Color = self:GetBaseColor();
-                end
-
-                if( PreviousChannelPersistence[ Key ] and PreviousChannelPersistence[ Key ].Allowed ~= nil ) then
-                    Addon.DB:GetPersistence().Channels[ Key ].Allowed = PreviousChannelPersistence[ Key ].Allowed;
-                else
-                    Addon.DB:GetPersistence().Channels[ Key ].Allowed = true;
-                end
-            end
-            ]]
 
             -- Update chat options
             for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
                 ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Channel.Color ) );
             end
+        end
+
+        Addon.CHAT.RegisterCallbacks = function( self )
+        -- Join Channel
+            hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
+                if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                    Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
+                    for Id,ChannelData in pairs( self:GetChannels() ) do
+                        if( ChannelData.Name == ChannelName ) then
+                            Addon.DB:GetPersistence().Channels[ ChannelName ].Id = ChannelData.Id;
+                        end
+                    end
+                    Addon.DB:GetPersistence().Channels[ ChannelName ].Color = self:GetBaseColor();
+                    Addon.DB:GetPersistence().Channels[ ChannelName ].Allowed = true;
+                end
+            end );
+            -- Leave Channel
+            hooksecurefunc( 'LeaveChannelByName',function( ChannelName )
+                if( ChannelName ) then
+                    if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                        Addon.DB:GetPersistence().Channels[ ChannelName ] = nil;
+                    end
+                end
+            end );
         end
 
         self:UnregisterEvent( 'ADDON_LOADED' );
