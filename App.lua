@@ -242,16 +242,15 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             local PlayerLevel = '';--'['..UnitLevel( PlayerId )..']';
 
             -- Blizz format()'s Special Event Messages
-            -- CHAT_MSG_CHANNEL_NOTICE_USER 
-            -- https://github.com/tekkub/wow-globalstrings/blob/master/GlobalStrings/enUS.lua
-            -- file is super old but works. i ran /dump CHAT_SET_MODERATOR_NOTICE to test
-            -- @todo: would be nice to check for a new version of this file that's up to date
+            -- e.g. CHAT_MSG_CHANNEL_NOTICE_USER 
+            -- for full list of global strings, either extract it via game files or visit PTR:
+            -- https://www.townlong-yak.com/framexml/ptr/Helix/GlobalStrings.lua
             local UserActions = '';
             --GetFixedLink( )
             if( ChatType == 'CHANNEL_JOIN' ) then
-                MessageText = CHAT_CHANNEL_JOIN_GET:format( PlayerLink );
+                MessageText = CHAT_CHANNEL_JOIN_GET:format( PlayerName );
             elseif( ChatType == 'CHANNEL_LEAVE' ) then
-                MessageText = CHAT_CHANNEL_LEAVE_GET:format( PlayerLink );
+                MessageText = CHAT_CHANNEL_LEAVE_GET:format( PlayerName );
             elseif( Event == 'CHAT_MSG_CHANNEL_NOTICE_USER' ) then
                 local GlobalString = _G["CHAT_"..ChatType.."_NOTICE_BN"];
                 if( not GlobalString ) then
@@ -263,7 +262,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                     return;
                 end
-                MessageText = GlobalString:format( ChannelBaseName,PlayerLink );
+                MessageText = GlobalString:format( ChannelBaseName,PlayerName );
             else
                 UserActions = PFlag..PlayerLink..PlayerAction..PlayerLevel;
             end
@@ -412,8 +411,12 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
                 return false,MessageText,PlayerName,...
             end
 
+            -- todo: review
+            -- especially review any data that gets updated/tainted such as links
             -- Retail Chat /Interface/AddOns/Blizzard_ChatFrameBase/Mainline/ChatFrameOverrides.lua 
-
+            -- https://www.google.com/search?q=in+retail+wow+midnight+12.0%2C+how+should+i+update+ChatFrame_AddMessageEventFilter+calls+to+prevent+tainting+of+chat+text%3F&rlz=1C5CHFA_enUS1174US1174&oq=in+retail+wow+midnight+12.0%2C+how+should+i+update+ChatFrame_AddMessageEventFilter+calls+to+prevent+tainting+of+chat+text%3F&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQIRiPAjIHCAIQIRiPAtIBCTM0NDM5ajBqOagCALACAA&sourceid=chrome&ie=UTF-8
+            -- Some of the code below was copied from blizz and probably needs some love so they will likely udpate it quickly
+            
             -- Cinematic
             if( LBox) then
                 return true;
