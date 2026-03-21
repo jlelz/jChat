@@ -60,8 +60,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
-    local Test = Addon:Minify( SenderName );
-
     -- Prevent Ignored
     local IgnoredMessage = false;
     local IgnoredMessages = Addon.CONFIG:GetIgnores();
@@ -237,8 +235,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     if( Mentioned and ChatType:find( 'WHISPER' ) ) then Mentioned = false; end;
     if( Watched and ChatType:find( 'WHISPER' ) ) then Watched = false; end;
 
-    --MessageText = '[[' .. MyName .. ']]' .. '[[' .. tostring( SenderName ) .. ']]' ..'[[' .. tostring( Watched ) .. ']]' ..'[[' .. tostring( Mentioned ) .. ']]' .. MessageText;
-
     -- Watched
     if( Watched or Mentioned ) then
         MessageText = CreateColor( HighLightColor.r or 1, HighLightColor.g or 1, HighLightColor.b or 1, HighLightColor.a or 1 ):WrapTextInColorCode( MessageText );
@@ -256,7 +252,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         StringArgs = StringArgs .. k .. " = " .. tostring(v) .. ", "
     end
     MessageText = StringArgs .. MessageText;
-    --MessageText = table.concat(Args, ", ") .. MessageText;
     ]]
 
     -- Call Original AddMessage
