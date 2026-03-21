@@ -6,6 +6,22 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
     if( AddonName == 'jChat' ) then
 
         --
+        -- Set DB value
+        --
+        -- @return void
+        Addon.CONFIG.SetValue = function( self,Index,Value )
+            Addon.DB:SetValue( Index,Value );
+        end
+
+        --
+        -- Get DB value
+        --
+        -- @return mixed
+        Addon.CONFIG.GetValue = function( self,Index )
+            return Addon.DB:GetValue( Index );
+        end
+
+        --
         --  Get module settings
         --
         --  @return table
@@ -58,15 +74,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     order = Order,
                     name = 'Highlights',
                 };
-
-                Order = Order+1;
-                Settings.FullHighLight = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Fully Highlight Message',
-                    desc = 'Enable/disable highlighting entire message alerts during match',
-                    arg = 'FullHighlight',
-                };
                 Order = Order+1;
                 Settings.AlertColor = {
                     type = 'color',
@@ -105,49 +112,14 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     arg = 'TimeColor',
                     --hasAlpha = true,
                 };
-
-                Order = Order+1;
-                Settings.AlertTypes = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Types',
-                };
                 Order = Order+1;
                 Settings.AlertQuest = {
                     type = 'toggle',
                     order = Order,
-                    name = 'Quest Alert',
+                    name = 'Quests',
                     desc = 'Enable/disable alerting if anyone mentions a quest you are on',
                     arg = 'QuestAlert',
                 };
-                for FilterName,FilterData in pairs( self:GetChatFilters() ) do
-                    Order = Order+1;
-                    local Disabled = false;
-                    if( FilterName == 'WHISPER' ) then
-                        Disabled = true;
-                    end
-                    Settings[ FilterName..'Alert' ] = {
-                        type = 'toggle',
-                        order = Order,
-                        name = FilterName,
-                        disabled = Disabled,
-                        desc = 'Enable/disable alerting for '..FilterName..' messages',
-                        arg = FilterName,
-                        get = function( Info )
-                            if( Addon.DB:GetPersistence().ChatFilters[ Info.arg ] ~= nil ) then
-                                return Addon.DB:GetPersistence().ChatFilters[ Info.arg ];
-                            end
-                        end,
-                        set = function( Info,Value )
-                            if( Addon.DB:GetPersistence().ChatFilters[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().ChatFilters[ Info.arg ] = Value;
-                                for _,FilterName in pairs( self:GetChatFilters()[ Info.arg ] ) do
-                                    Addon.APP:SetFilter( FilterName,Value );
-                                end
-                            end
-                        end,
-                    };
-                end
 
                 Order = Order+1;
                 Settings.AlertSounds = {
@@ -178,7 +150,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Alert sound volume',
                     min = 0,max = 1,step = 0.1,
                     set = function( Info,Value )
-                        local SoundChannel = Addon.DB:GetValue( 'AlertChannel' );
+                        local SoundChannel = Addon.CONFIG:GetValue( 'AlertChannel' );
                         local CVarSetting = 'Sound_'..SoundChannel..'Volume';
                         local SoundChannelVolume = GetCVar( CVarSetting );
                         if( SoundChannelVolume ~= nil ) then
@@ -201,15 +173,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         order = Order,
                         name = 'Personal Alerts',
                     },
-                };
-
-                Order = Order+1;
-                Settings.AFKAlert = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'AFK Whisper Alert',
-                    desc = 'Enable to get persistent alerts for whispers while AFK',
-                    arg = 'AFKAlert',
                 };
 
                 Order = Order+1;
@@ -236,66 +199,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     arg = 'Aliases',
                     width = 'normal',
                     multiline = false,
-                };
-                Order = Order+1;
-                Settings.MentionMove = {
-                    type = 'select',
-                    order = Order,
-                    name = 'Position Alert Message Window',
-                    desc = 'Reposition message window',
-                    values = Addon:ArrayReverse( {
-                        Close = 0,
-                        Open = 1,
-                    } ),
-                    get = function( Info )
-                        local Value;
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Value = Addon.DB:GetPersistence()[ Info.arg ];
-                        end
-                        if( tonumber( Value ) > 0 ) then
-                            Addon.CONFIG.MentionPosition:Show();
-                        else
-                            Addon.CONFIG.MentionPosition:Hide();
-                        end
-                        return Value;
-                    end,
-                    set = function( Info,Value )
-                        if( Value > 0 ) then
-                            Addon.CONFIG.MentionPosition:Show();
-                        else
-                            Addon.CONFIG.MentionPosition:Hide();
-                        end
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = Value;
-                        end
-                        Addon.CONFIG.MentionPosition:SetAlpha( Addon.DB:GetValue( 'MentionAlpha' ) );
-                    end,
-                    style = 'radio',
-                    arg = 'MentionMove',
-                };
-                Order = Order+1;
-                Settings.MentionAlpha = {
-                    type = 'range',
-                    order = Order,
-                    name = 'Alert Message Alpha',
-                    min = 0,max = 1,step = 0.1,
-                    set = function( Info,Value )
-                        if( Value > 0 ) then
-                            Addon.CONFIG.MentionPosition:Show();
-                        else
-                            Addon.CONFIG.MentionPosition:Hide();
-                        end
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = Value;
-                        end
-                        Addon.CONFIG.MentionPosition:SetAlpha( Value );
-                    end,
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            return Addon.DB:GetPersistence()[ Info.arg ];
-                        end
-                    end,
-                    arg = 'MentionAlpha',
                 };
 
                 return Settings;
@@ -568,7 +471,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             type = 'toggle',
                             order = Order,
                             get = function( Info )
-                                return Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed or false;
+                                if( Addon.DB:GetPersistence().Channels[ Info.arg ] ) then
+                                    return Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed;
+                                end
                             end,
                             set = function( Info,Value )
                                 Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed = Value;
@@ -595,10 +500,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         if( ClubData and tonumber( #ClubData ) > 0 ) then
                             local ClubId = ClubData[2] or 0;
                             if( tonumber( ClubId ) > 0 ) then
-                                local ClubInfo = C_Club.GetClubInfo( ClubId );
-                                if( ClubInfo ) then
-                                    ChannelData.Name = ClubInfo.name;
-                                    ChannelData.Name = ChannelData.Name:gsub( '%s+','' );
+                                local ClubName = Addon.CHAT:GetClubNameForId( ClubId );
+                                if( ClubName ) then
+                                    ChannelData.Name = ClubName:gsub( '%s+','' );
                                 end
                             end
                         end
@@ -612,19 +516,15 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil and Addon.DB:GetPersistence().Channels[ Info.arg ].Color ~= nil ) then
                                     return unpack( Addon.DB:GetPersistence().Channels[ Info.arg ].Color );
                                 else
-                                    if( Addon.DB:GetValue( 'Debug' ) ) then
-                                        Addon:Dump( {
-                                            Arg = Info.arg,
-                                            AllData = Addon.DB:GetPersistence().Channels,
-                                            MyData = Addon.DB:GetPersistence().Channels[ Info.arg ],
-                                        });
+                                    Addon.DB:GetPersistence().Channels[ Info.arg ] = {};
+                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                         Addon.FRAMES:Debug( Info.arg,'has no Addon.DB:GetPersistence().Channels entry' );
                                     end
                                 end
                             end,
                             set = function( Info,R,G,B,A )
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
-                                    if( Addon.DB:GetValue( 'Debug' ) ) then
+                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                         Addon.FRAMES:Debug( 'Addon.CONFIG:GetSettings()','Calling set() for',Info.arg,'Chat Color' );
                                     end
                                     Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
@@ -703,9 +603,14 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Extend chat history to 10,000 lines',
                     arg = 'ScrollBack',
                     set = function( Info,Value )
-                        Addon.APP:SetValue( Info.arg,Value );
+                        Addon.CONFIG:SetValue( Info.arg,Value );
 
-                        Addon.CHAT:SetScrolling( Addon.APP:GetValue( 'ScrollBack' ),Addon.CHAT.ChatFrame );
+                        local Value = Addon.CONFIG:GetValue( 'ScrollBack' );
+                        if( Value ) then
+                            FCF_GetCurrentChatFrame():SetMaxLines( 10000 );
+                        else
+                            FCF_GetCurrentChatFrame():SetMaxLines( 128 );
+                        end
                     end,
                 };
                 Order = Order+1;
@@ -716,18 +621,19 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Enable/disable chat fading',
                     arg = 'FadeOut',
                     set = function( Info,Value )
-                        Addon.APP:SetValue( Info.arg,Value );
+                        Addon.CONFIG:SetValue( Info.arg,Value );
 
-                        Addon.CHAT:SetFading( Addon.APP:GetValue( 'FadeOut' ),Addon.CHAT.ChatFrame );
+                        local Value = Addon.CONFIG:GetValue( 'FadeOut' );
+                        FCF_GetCurrentChatFrame():SetFading( Value );
                     end,
                 };
                 Order = Order+1;
-                Settings.ClassColor = {
+                Settings.AutoInvite = {
                     type = 'toggle',
                     order = Order,
-                    name = 'Class Color',
-                    desc = 'Enable/disable chat class colors',
-                    arg = 'ColorNamesByClass',
+                    name = 'Auto Invite',
+                    desc = 'Automatically accept party members who send "inv" messages',
+                    arg = 'AutoInvite',
                 };
                 Order = Order+1;
                 Settings.FontFamily = {
@@ -741,7 +647,10 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
                             Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
                         end
-                        Addon.CHAT:SetFont( Addon.APP:GetValue( 'Font' ),Addon.CHAT.ChatFrame );
+                        local Font = Addon.CONFIG:GetValue( 'Font' );
+                        FCF_GetCurrentChatFrame():SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                        FCF_GetCurrentChatFrame():SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                        FCF_GetCurrentChatFrame():SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
                     end,
                     values = {
                         skurri = 'skurri',
@@ -766,7 +675,8 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
                             Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
                         end
-                        Addon.CHAT:SetFont( Addon.APP:GetValue( 'Font' ),Addon.CHAT.ChatFrame );
+                        local Font = Addon.CONFIG:GetValue( 'Font' );
+                        FCF_GetCurrentChatFrame():SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                     end,
                     values = {
                         [10] = 10,
@@ -783,28 +693,19 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 Order = Order+1;
                 Settings.ShowTimestamps = {
                     type = 'select',
-                    values = Addon:ArrayReverse( {
+                    values = {
                         none = 'none',
-                        hour_min_12 = '%I:%M ',
-                        hour_min_ext = '%I:%M %p ',
-                        hour_min_sec_12_ext = '%I:%M:%S %p ',
-                        hour_min_24 = '%H:%M ',
-                        hour_min_sec_24 = '%H:%M:%S ',
-                    } ),
+                        hour_min_12 = 'hour_min_12',
+                        hour_min_ext = 'hour_min_ext',
+                        hour_min_sec_12_ext = 'hour_min_sec_12_ext',
+                        hour_min_24 = 'hour_min_24',
+                        hour_min_sec_24 = 'hour_min_sec_24',
+                    },
                     order = Order,
                     name = 'Timestamps',
                     desc = 'Timestamp format',
                     arg = 'showTimestamps',
                 };
-                Order = Order+1;
-                Settings.AutoInvite = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Auto Invite',
-                    desc = 'Automatically accept party members who send "inv" messages',
-                    arg = 'AutoInvite',
-                };
-
                 Order = Order+1;
                 Settings.LinksEnabled = {
                     type = 'toggle',
@@ -813,7 +714,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Automatically convert links to clickable',
                     arg = 'LinksEnabled',
                 };
-
                 Order = Order+1;
                 Settings.Debug = {
                     type = 'toggle',
@@ -828,10 +728,10 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             local Settings = {
                 type = 'group',
                 get = function( Info )
-                    return Addon.APP:GetValue( Info.arg );
+                    return Addon.CONFIG:GetValue( Info.arg );
                 end,
                 set = function( Info,Value )
-                    Addon.APP:SetValue( Info.arg,Value );
+                    Addon.CONFIG:SetValue( Info.arg,Value );
                 end,
                 name = 'jChat Settings',
                 childGroups = 'tab',
@@ -898,38 +798,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
         --
         --  @return void
         Addon.CONFIG.Init = function( self )
-
-            -- Setup Mention
-            self.MentionPosition = Addon.FRAMES:AddAcknowledge( {
-                Name = 'Mention Alert',
-                Label = 'Mention',
-                Value = 'Mention Alert Position\r Drag to your desired location',
-            },UIParent );
-            self.MentionPosition:Hide();
-            self.MentionPosition.Butt:Hide();
-            self.MentionPosition:SetScript( 'OnDragStop',function( self )
-
-                self:StopMovingOrSizing();
-                self:SetUserPlaced( true );
-
-                local p,rt,rp,x,y = self:GetPoint();
-                Addon.APP:SetValue( 'MentionDrop',{
-                    p = p,
-                    rt = rt or 'UIParent',
-                    rp = rp,
-                    x = x,
-                    y = y,
-                } );
-
-            end );
-            local MentionDrop = Addon.APP:GetValue( 'MentionDrop' );
-            if( MentionDrop.x and MentionDrop.y ) then
-                self.MentionPosition:SetPoint( MentionDrop.p,MentionDrop.x,MentionDrop.y );
-            else
-                self.MentionPosition:SetPoint( 'center' );
-            end
-            self.MentionPosition:Hide();
-
             -- Initialize window
             local _, CategoryID = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( AddonName,AddonName );
             LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( AddonName,self:GetSettings() );
@@ -946,46 +814,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Settings.OpenToCategory( CategoryID );
                 end
             end
-        end
-
-        Addon.CONFIG.GetChatFilters = function( self )
-            return {
-                PARTY = {
-                    'CHAT_MSG_PARTY',
-                    'CHAT_MSG_PARTY_LEADER',
-                },
-                RAID = {
-                    'CHAT_MSG_RAID',
-                    'CHAT_MSG_RAID_LEADER',
-                    'CHAT_MSG_RAID_WARNING',
-                    'CHAT_MSG_INSTANCE_CHAT',
-                    'CHAT_MSG_INSTANCE_CHAT_LEADER',
-                    'CHAT_MSG_TARGETICONS',
-                },
-                GUILD = {
-                    'CHAT_MSG_GUILD',
-                    'CHAT_MSG_OFFICER',
-                    'GUILD_MOTD',
-                    'PLAYER_GUILD_UPDATE',
-                },
-                YELL = {
-                    'CHAT_MSG_YELL',
-                },
-                SAY = {
-                    'CHAT_MSG_SAY',
-                },
-                CHANNEL = {
-                    'CHAT_MSG_CHANNEL',
-                    'CHAT_MSG_CHANNEL_JOIN',
-                    'CHAT_MSG_CHANNEL_LEAVE',
-                    'CHAT_MSG_COMMUNITIES_CHANNEL',
-                    'CHAT_MSG_CHANNEL_NOTICE_USER',
-                },
-                WHISPER = {
-                    'CHAT_MSG_WHISPER',
-                    'CHAT_MSG_WHISPER_INFORM',
-                },
-            };
         end
 
         Addon.CONFIG.GetMessageGroups = function( self )
@@ -1191,14 +1019,14 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
 
         Addon.CONFIG.RegisterCallbacks = function( self )
             hooksecurefunc( 'ToggleChatMessageGroup',function( Checked,Group )
-                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( Addon.CHAT.ChatFrame,Group ) ~= nil ) then
+                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( FCF_GetCurrentChatFrame(),Group ) ~= nil ) then
                     if( Addon.DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
                         Addon.DB:GetPersistence().ChatGroups[ Group ] = Checked;
                     end
                 end
             end );
             hooksecurefunc( 'ToggleChatColorNamesByClassGroup',function( Checked,Group )
-                if( Addon.DB:GetValue( 'Debug' ) ) then
+                if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                     Addon.FRAMES:Debug( 'App.CONFIG','ToggleChatColorNamesByClassGroup',Checked,Group );
                 end
             end );

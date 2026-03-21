@@ -102,9 +102,23 @@ Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( QuestieLoader ) then
                 QuestieLoader:ImportModule( 'ChatFilter' );
 
-                _,QuestieText = QuestieFilter.Filter( Addon.CHAT.ChatFrame,_,... );
+                _,QuestieText = QuestieFilter.Filter( ChatFrame,_,... );
             end
             return QuestieText;
+        end
+
+        Addon.QUESTS.Init = function( self )
+            if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
+                self:EnableQuestEvents();
+            else
+                self:DisableQuestEvents();
+            end
+            self:RebuildQuests();
+            --[[
+            Addon:Dump( {
+                ActiveQuests = self.ActiveQuests,
+            } );
+            ]]
         end
         
         self:UnregisterEvent( 'ADDON_LOADED' );

@@ -32,7 +32,6 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 IgnoreList = {
                     'boost',
                 },
-                AFKAlert = true,
                 MentionAlert = true,
                 MentionDrop = {
                 },
@@ -58,7 +57,6 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 AlertVolume = .5,
                 AlertList = {
                 },
-                FullHighlight = true,
                 LinksEnabled = true,
                 Channels = {},
                 ChatGroups = {
@@ -83,16 +81,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     CHANNEL = true,
                 },
                 BypassTypes = true,
-                ChatFilters = {
-                    PARTY = true,
-                    RAID = true,
-                    GUILD = true,
-                    YELL = true,
-                    SAY = false,
-                    CHANNEL = true,
-                    WHISPER = true,
-                },
-                showTimestamps = '%I:%M:%S %p ',
+                showTimestamps = 'hour_min_sec_12_ext',
                 TimeColor = {
                     184 / 255,
                     184 / 255,
@@ -105,12 +94,6 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 RaidQueue = {
                 },
                 RespectLocks = true,
-                ColorNamesByClass = true,
-                Roles = {
-                    DPS = true,
-                    HEALER = false,
-                    TANK = false,
-                },
                 Debug = false,
             };
         end
@@ -173,6 +156,24 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
 
             if( not self:GetPersistence() ) then
                 return;
+            end
+
+            -- Subscribed Clubs
+            if( C_Club ) then
+                local SubscribedClubs = C_Club:GetSubscribedClubs();
+                for _,Club in pairs( SubscribedClubs ) do
+                    if( Club and Club.shortName ) then
+                        local ChannelName = Club.shortName:gsub( '%s+','' );
+                        if( ChannelName ) then
+                            if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                                Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Id = Club.clubid;
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Color = self:GetBaseColor();
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Allowed = true;
+                            end
+                        end
+                    end
+                end
             end
         end
         
