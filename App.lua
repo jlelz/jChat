@@ -46,7 +46,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
 
-    if( not Addon.APP:CanUnPackArgs( ... ) ) then
+    if( not Addon.APP:CanUnPackArgs( ... ) or issecretvalue( MessageText ) ) then
         if( Addon.CHAT.Hooks[self] ) then
             return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end

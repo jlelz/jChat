@@ -369,6 +369,21 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
             end );
+            -- Editbox Focus
+            FCF_GetCurrentChatFrame().editBox:HookScript( 'OnEditFocusGained',function( self,... )
+
+                local ChannelId = self:GetAttribute( 'channelTarget' );
+                local ChannelName = Addon.CHAT:GetChannelName( ChannelId );
+                local DBChannels = Addon.DB:GetPersistence().Channels;
+
+                for i,v in pairs( DBChannels ) do
+                    if( v and v.Id and ChannelId == v.Id ) then
+                        if( v.Name ) then
+                            self:SetTextColor( unpack( DBChannels[ v.Name ].Color ) );
+                        end
+                    end
+                end
+            end );
             -- New Chat Tab
             -- Unfortunately, FCF_OpenNewWindow and FCF_DockFrame does not work for this
             -- that seems super strange to me
