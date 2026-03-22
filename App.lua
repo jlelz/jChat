@@ -35,28 +35,46 @@ Addon.APP.PrependTimeStamp = function( self,MessageText )
     return MessageText;
 end
 
+Addon.APP.CanUnPackArgs = function( self,... )
+    local Value = select( 4,... );
+    if( Value and type( Value ) == 'table' ) then
+        return true;
+    end
+end
+
 Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
-    local SenderName = MessageText:match("|Hplayer:([^:]+)") or '';
-    local GMFlag = select( 6,... );
-    local BckUpChannelId = select( 7,... ); 
-    local IntChannelId = select( 8,... ) or 0;
-    local ChannelBaseName = select( 9,... );
-    local UnUsed = select( 10,... );
-    local LineId = select( 11,... );
-    local PlayerId = select( 12,... );
-    local BNId = select( 13,... );
-    local IsMobile = select( 14,... );
-    local LBox = select( 16,... );
-    local IconReplacement = select( 17,... );
+
+    if( not Addon.APP:CanUnPackArgs( ... ) ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
+    end
+
+    -- Not sure why this is a table... lol
+    local TableValues = select( 4,... );
+    local TextToFilter,SenderName,
+        LangHeader,
+        ChannelNameId,
+        _,
+        GMFlag,
+        BckUpChannelId,
+        IntChannelId,
+        ChannelBaseName,
+        UnUsed,
+        LineId,
+        PlayerId,
+        BNId,
+        IsMobile,
+        _,
+        LBox,
+    IconReplacement = unpack( TableValues );
 
     -- Call Original AddMessage
     if( not SenderName or SenderName == nil or SenderName == '' ) then
         if( Addon.CHAT.Hooks[self] ) then
-            if( not IgnoredMessage ) then
-                return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId );
-            end
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end
     end
 
@@ -65,7 +83,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local IgnoredMessages = Addon.CONFIG:GetIgnores();
     if( #IgnoredMessages > 0 ) then
         for i,IgnoredMessage in ipairs( IgnoredMessages ) do
-            if( Addon:Minify( MessageText ):find( Addon:Minify( IgnoredMessage ) ) ) then
+            if( Addon:Minify( TextToFilter ):find( Addon:Minify( IgnoredMessage ) ) ) then
                 if( Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
                     IgnoredMessage = true;
                 end
@@ -83,7 +101,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
 
     -- Invite check
     if( ChatType:find( 'WHISPER' ) and Addon.CONFIG:GetValue( 'AutoInvite' ) ) then
-        if( Addon:Minify( MessageText ) == 'inv' ) then
+        if( Addon:Minify( TextToFilter ) == 'inv' ) then
             if( GetNumGroupMembers and GetNumGroupMembers() > 4 ) then
                 if( ConvertToRaid ) then
                     ConvertToRaid();
@@ -106,14 +124,14 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local WatchedMessages = Addon.CONFIG:GetAlerts();
     if( #WatchedMessages > 0 ) then
         for _,WatchedMessage in pairs( WatchedMessages ) do
-            if( Addon:Minify( MessageText ):find( Addon:Minify( WatchedMessage ) ) ) then
+            if( Addon:Minify( TextToFilter ):find( Addon:Minify( WatchedMessage ) ) ) then
                 Watched = '|Alert:'..WatchedMessage;
             end
         end
     end
     if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
         for _,ActiveQuest in pairs( Addon.QUESTS.ActiveQuests ) do
-            if( Addon:Minify( MessageText ):find( ActiveQuest ) ) then
+            if( Addon:Minify( TextToFilter ):find( ActiveQuest ) ) then
                 Watched = '|Quest:'..ActiveQuest;
             end
         end
@@ -125,11 +143,11 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     for ABBREV,IsQueued in pairs( DungeonQueue ) do
         if( IsQueued ) then
             for _,Abbrev in pairs( Dungeons[ ABBREV ].Abbrevs ) do
-                if( Addon:Minify( MessageText ):find( Addon:Minify( Abbrev ) ) ) then
+                if( Addon:Minify( TextToFilter ):find( Addon:Minify( Abbrev ) ) ) then
                     Watched = '|Dungeon:'..ABBREV..'|Abbrev:'..Abbrev;
                 end
             end
-            if( Addon:Minify( MessageText ):find( Addon:Minify( ABBREV ) ) ) then
+            if( Addon:Minify( TextToFilter ):find( Addon:Minify( ABBREV ) ) ) then
                 Watched = '|Dungeon:'..ABBREV;
             end
         end
@@ -139,11 +157,11 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     for ABBREV,IsQueued in pairs( RaidQueue ) do
         if( IsQueued ) then
             for _,Abbrev in pairs( Raids[ ABBREV ].Abbrevs ) do
-                if( Addon:Minify( MessageText ):find( Addon:Minify( Abbrev ) ) ) then
+                if( Addon:Minify( TextToFilter ):find( Addon:Minify( Abbrev ) ) ) then
                     Watched = '|Raid:'..ABBREV..'|Abbrev:'..Abbrev;
                 end
             end
-            if( Addon:Minify( MessageText ):find( Addon:Minify( ABBREV ) ) ) then
+            if( Addon:Minify( TextToFilter ):find( Addon:Minify( ABBREV ) ) ) then
                 Watched = '|Raid:'..ABBREV;
             end
         end
@@ -158,14 +176,14 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         Mentioned = Word;
     end
     if( Addon.CONFIG:GetValue( 'MentionAlert' ) ) then
-        if( Addon:Minify( MessageText ):find( Addon:Minify( MyPlayerName ) ) ) then
+        if( Addon:Minify( TextToFilter ):find( Addon:Minify( MyPlayerName ) ) ) then
             Mentioned = MyPlayerName;
         end
     end
     local AliasList = Addon.CONFIG:GetAliasList();
     if( #AliasList > 0 ) then
         for _,Alias in pairs( AliasList ) do
-            if( Addon:Minify( MessageText ):find( Addon:Minify( Alias ) ) ) then
+            if( Addon:Minify( TextToFilter ):find( Addon:Minify( Alias ) ) ) then
                 Mentioned = Alias;
             end
         end
@@ -191,7 +209,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         -- Override for monitored messages
         if( Watched or Mentioned ) then
             if( Addon.CONFIG:GetValue( 'BypassTypes' ) ) then
-                IgnoredMessage = true;
+                IgnoredMessage = false;
             end
         end
     end
@@ -205,7 +223,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     if( Addon.CONFIG:GetValue( 'LinksEnabled' ) ) then
         local Color = 'ffffff';
         local ALink = '|cff'..Color..'|Haddon:jChat:url|h[>%1$s<]|h|r';
-        if( strlen( MessageText ) > 7 ) then
+        if( strlen( TextToFilter ) > 7 ) then
             local Patterns = GetURLPatterns();
             for i = 1, #Patterns do
                 local v = Patterns[i];
@@ -249,6 +267,11 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local Args = { ... };
     local StringArgs = '';
     for k, v in pairs(Args) do
+        if( type( v ) == 'table' ) then
+            for i,m in pairs( v ) do
+                StringArgs = StringArgs .. " v[" .. i .. "] = " .. tostring(m) .. ", "
+            end
+        end
         StringArgs = StringArgs .. k .. " = " .. tostring(v) .. ", "
     end
     MessageText = StringArgs .. MessageText;
