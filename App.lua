@@ -237,8 +237,17 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local Mentioned = GetMentioned();
     local Watched = GetWatched();
 
-    -- Highlight Colors
+    -- Channel Colors
     local HighLightColor = {};
+    local DBChannels = Addon.DB:GetPersistence().Channels;
+    if( tonumber( IntChannelId ) > 0 ) then
+        if( DBChannels[ ChannelBaseName ] and DBChannels[ ChannelBaseName ].Color ) then
+            HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ ChannelBaseName ].Color );
+            MessageText = CreateColor( HighLightColor.r or 1, HighLightColor.g or 1, HighLightColor.b or 1, HighLightColor.a or 1 ):WrapTextInColorCode( MessageText );
+        end
+    end
+
+    -- Highlight Colors
     if( Watched ) then
         HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.CONFIG:GetValue( 'AlertColor' ) );
     elseif( Mentioned ) then
@@ -285,7 +294,31 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
 end
 
-Addon.APP.Init = function( self )
+Addon.APP:RegisterEvent( 'ADDON_LOADED' );
+Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
+    if( AddonName ~= 'jChat' ) then return end;
+
+    Addon.FRAMES:Notify( 'Prepping..please wait' );
+
+    -- Initialize
+    Addon.DB:Init();
+    Addon.QUESTS:Init();
+    Addon.CHAT:Init();
+    Addon.CONFIG:Init();
+
+    -- Callbacks
+    Addon.CONFIG:RegisterCallbacks();
+    Addon.CHAT:RegisterCallbacks();
+
+    -- Quests
+    if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
+        Addon.QUESTS:EnableQuestEvents();
+    else
+        Addon.QUESTS:DisableQuestEvents();
+    end
+    Addon.QUESTS:RebuildQuests();
+
+    -- Joins
     local R,G,B,A = unpack( Addon.CHAT:GetBaseColor() );
     local DBChannels = Addon.DB:GetPersistence().Channels;
     local FrameChannels = Addon.CHAT:GetChannels();
@@ -310,43 +343,23 @@ Addon.APP.Init = function( self )
             ChannelLink = Addon.CHAT:GetChannelLink( Channel.Id,Channel.Name );
         end
 
+        local HighLightColor = {};
         if( tonumber( Channel.Id ) > 0 ) then
             if( DBChannels[ Channel.Name ] and DBChannels[ Channel.Name ].Color ) then
-                R,G,B,A,Id = unpack( DBChannels[ Channel.Name ].Color );
+                HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ Channel.Name ].Color );
             else
-                local ChatInfo = ChatTypeInfo["CHANNEL_JOIN"];
-                R,G,B,A,Id = unpack( ChatInfo );
+                local ChatInfo = ChatTypeInfo[ 'CHANNEL_JOIN' ];
+                HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( ChatInfo );
             end
         end
 
-        FCF_GetCurrentChatFrame():AddMessage( 'You have joined '..ChannelLink,R,G,B,A,Id );
+        local JoinedText = CreateColor( HighLightColor.r or 1, 
+            HighLightColor.g or 1, 
+            HighLightColor.b or 1, 
+            HighLightColor.a or 1 ):WrapTextInColorCode( 'You have joined '..ChannelLink );
+
+        FCF_GetCurrentChatFrame():AddMessage( JoinedText );
     end
-end
-
-Addon.APP:RegisterEvent( 'ADDON_LOADED' );
-Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName ~= 'jChat' ) then return end;
-
-    Addon.FRAMES:Notify( 'Prepping..please wait' );
-
-    -- Initialize
-    Addon.DB:Init();
-    Addon.QUESTS:Init();
-    Addon.CHAT:Init();
-    Addon.CONFIG:Init();
-    Addon.APP:Init();
-
-    -- Callbacks
-    Addon.CONFIG:RegisterCallbacks();
-    Addon.CHAT:RegisterCallbacks();
-
-    -- Quests
-    if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
-        Addon.QUESTS:EnableQuestEvents();
-    else
-        Addon.QUESTS:DisableQuestEvents();
-    end
-    Addon.QUESTS:RebuildQuests();
 
     Addon.FRAMES:Notify( 'Done' );
 end );
