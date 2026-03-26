@@ -168,7 +168,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                             if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
                                 Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
                                 Addon.DB:GetPersistence().Channels[ ChannelName ].Id = Club.clubid;
-                                Addon.DB:GetPersistence().Channels[ ChannelName ].Color = self:GetBaseColor();
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Color = Addon.CHAT:GetBaseColor();
                                 Addon.DB:GetPersistence().Channels[ ChannelName ].Allowed = true;
                             end
                         end
