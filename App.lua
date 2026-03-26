@@ -3,6 +3,16 @@ local strsub = strsub;
 local select = select;
 Addon.APP = CreateFrame( 'Frame' );
 
+Addon.APP.GetTimeStampPatterns = function( self )
+    return {
+        '%d%d:%d%d:%d%d %a%a',
+        '%d%d:%d%d:%d%d',
+
+        '%d%d:%d%d %a%a',
+        '%d%d:%d%d',
+    };
+end
+
 Addon.APP.PrependTimeStamp = function( self,MessageText )
     -- Timestamp Formats
     local PossibleTimestampFmts = {
@@ -16,17 +26,19 @@ Addon.APP.PrependTimeStamp = function( self,MessageText )
 
     -- Timestamp Format
     local SelectedKey = Addon.CONFIG:GetValue( 'showTimestamps' ); 
-    local FmtString = PossibleTimestampFmts[ SelectedKey ] or 'none'
+    local FmtString = PossibleTimestampFmts[ SelectedKey ] or 'none';
 
     -- Timestamp Color
     local r, g, b = unpack( Addon.CONFIG:GetValue( 'TimeColor' ) );
-    local TimeStampColor = CreateColor(r, g, b, 1)
+    local TimeStampColor = CreateColor(r, g, b, 1);
+    
+    if( FmtString ~= 'none' ) then
+        -- Try to Strip Existing Timestamp
+        for _,Pattern in pairs( Addon.APP:GetTimeStampPatterns() ) do
+            MessageText = MessageText:gsub( Pattern,'' );
+        end
 
-    -- Try to Strip Existing Timestamp
-    MessageText = MessageText:gsub("^%[%d%d?%:%d%d?%(%:%d%d%)?%]%s*", "")
-
-    -- Prepend Timestamp
-    if FmtString ~= 'none' then
+        -- Prepend Timestamp
         local RawTime = BetterDate( FmtString,time() );
         local ColoredTime = TimeStampColor:WrapTextInColorCode( RawTime );
         MessageText = ColoredTime .. MessageText
