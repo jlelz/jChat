@@ -42,8 +42,9 @@ end
 Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
+    local WhisperTypeInfo = ChatTypeInfo['WHISPER'];
 
-    if( not Addon.APP:CanUnPackArgs( ... ) or issecretvalue( MessageText ) ) then
+    if( not Addon.APP:CanUnPackArgs( ... ) or issecretvalue( MessageText ) or InCombatLockdown() ) then
         if( Addon.CHAT.Hooks[self] ) then
             return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end
@@ -187,6 +188,9 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     SetMentioned( Mentioned );
 
+    local Mentioned = GetMentioned();
+    local Watched = GetWatched();
+
     -- Prevent Toggled Channels
     local Permission;
     if( IntChannelId > 0 ) then
@@ -231,37 +235,48 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
-    local Mentioned = GetMentioned();
-    local Watched = GetWatched();
-
     -- Channel Colors
     local HighLightColor = {};
     local DBChannels = Addon.DB:GetPersistence().Channels;
     if( tonumber( IntChannelId ) > 0 ) then
         if( DBChannels[ ChannelBaseName ] and DBChannels[ ChannelBaseName ].Color ) then
             HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ ChannelBaseName ].Color );
-            MessageText = CreateColor( HighLightColor.r or 1, HighLightColor.g or 1, HighLightColor.b or 1, HighLightColor.a or 1 ):WrapTextInColorCode( MessageText );
+            MessageText = CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( MessageText );
         end
     end
 
-    -- Highlight Colors
-    if( Watched ) then
-        HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.CONFIG:GetValue( 'AlertColor' ) );
-    elseif( Mentioned ) then
-        HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( ChatTypeInfo["WHISPER"] );
+    -- Sender is Me
+    if( Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
+        if( ( Mentioned or Watched ) and not ChannelBaseName:find( 'jlelz' ) ) then
+            if( Mentioned ) then Mentioned = false; end;
+            if( Watched ) then Watched = false; end;
+        end
     end
-
-    -- Don't Alert for Me
-    if( Mentioned and Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then Mentioned = false; end;
-    if( Watched and Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then Watched = false; end;
 
     -- Don't Alert for Whisper
     if( Mentioned and ChatType:find( 'WHISPER' ) ) then Mentioned = false; end;
     if( Watched and ChatType:find( 'WHISPER' ) ) then Watched = false; end;
 
+    -- Highlight Colors
+    if( Watched ) then
+        HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.CONFIG:GetValue( 'AlertColor' ) );
+    end
+    if( Mentioned ) then
+        if( WhisperTypeInfo and WhisperTypeInfo.r ) then
+            HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = WhisperTypeInfo.r,WhisperTypeInfo.g,WhisperTypeInfo.b,WhisperTypeInfo.a;
+        end
+    end
+
     -- Watched
-    if( Watched or Mentioned ) then
-        MessageText = CreateColor( HighLightColor.r or 1, HighLightColor.g or 1, HighLightColor.b or 1, HighLightColor.a or 1 ):WrapTextInColorCode( MessageText );
+    if( Watched ) then
+        MessageText = MessageText
+            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( '|Watched: '..tostring( Watched ) );
+    end
+
+    -- Mentioned
+    if( Mentioned ) then
+        MessageText = MessageText
+            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( '|Mentioned: '..tostring( Mentioned ) );
     end
 
     -- Audible Alert
@@ -282,7 +297,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     MessageText = StringArgs .. MessageText;
     ]]
-
     -- Call Original AddMessage
     if( Addon.CHAT.Hooks[self] ) then
         if( not IgnoredMessage ) then
