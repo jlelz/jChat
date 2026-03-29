@@ -43,8 +43,14 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
     local WhisperTypeInfo = ChatTypeInfo['WHISPER'];
-
+    local CannotProcess;
     if( not Addon.APP:CanUnPackArgs( ... ) or issecretvalue( MessageText ) or InCombatLockdown() ) then
+        CannotProcess = true;
+    end
+    if( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() ) then
+        CannotProcess = true;
+    end
+    if( CannotProcess ) then
         if( Addon.CHAT.Hooks[self] ) then
             return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end
