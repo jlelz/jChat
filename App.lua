@@ -43,17 +43,17 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
     local WhisperTypeInfo = ChatTypeInfo['WHISPER'];
+    if( not Addon.APP:CanUnPackArgs( ... ) ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
+    end
     local CannotProcess;
-    if( not Addon.APP:CanUnPackArgs( ... ) or issecretvalue( MessageText ) or InCombatLockdown() ) then
+    if( issecretvalue( MessageText ) or InCombatLockdown() ) then
         CannotProcess = true;
     end
     if( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() ) then
         CannotProcess = true;
-    end
-    if( CannotProcess ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
-        end
     end
 
     -- Not sure why this is a table... lol
@@ -75,46 +75,40 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         LBox,
     IconReplacement = unpack( TableValues );
 
-    -- Call Original AddMessage
-    if( not SenderName or SenderName == nil or SenderName == '' ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+    local Permission;
+    if( IntChannelId > 0 ) then
+        Permission = Addon.CONFIG:GetValue( 'Channels' )[ ChannelBaseName ] or false;
+    end
+    if( not Permission ) then
+        if( Addon:Minify( ChannelBaseName ):find( 'trade' ) ) then
+            Permission = Addon.CONFIG:GetValue( 'Channels' )[ 'Trade' ];
         end
     end
 
-    -- Prevent Ignored
-    local IgnoredMessage = false;
+    -- Invalid Sender
+    if( not SenderName or SenderName == nil or SenderName == '' ) then
+        CannotProcess = true;
+    end
+
+    -- Ignored Message
+    local Ignored;
     local IgnoredMessages = Addon.CONFIG:GetIgnores();
     if( #IgnoredMessages > 0 ) then
         for i,IgnoredMessage in ipairs( IgnoredMessages ) do
             if( Addon:Minify( TextToFilter ):find( Addon:Minify( IgnoredMessage ) ) ) then
-                if( Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
-                    IgnoredMessage = true;
+                if( not Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
+                    Ignored = true;
                 end
             end
         end
         for i,IgnoredIdiot in ipairs( IgnoredMessages ) do
             if( Addon:Minify( SenderName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
-                IgnoredMessage = true;
+                Ignored = true;
             end
         end
     end
-
-    -- Format Timestamp
-    MessageText = Addon.APP:PrependTimeStamp( MessageText );
-
-    -- Invite check
-    if( ChatType:find( 'WHISPER' ) and Addon.CONFIG:GetValue( 'AutoInvite' ) ) then
-        if( Addon:Minify( TextToFilter ) == 'inv' ) then
-            if( GetNumGroupMembers and GetNumGroupMembers() > 4 ) then
-                if( ConvertToRaid ) then
-                    ConvertToRaid();
-                elseif( C_PartyInfo and C_PartyInfo.ConvertToRaid ) then
-                    C_PartyInfo:ConvertToRaid();
-                end
-            end
-            InviteUnit( SenderName );
-        end
+    if( Permission and Permission.Allowed == false ) then
+        Ignored = true;
     end
 
     -- Watch check
@@ -197,27 +191,22 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local Mentioned = GetMentioned();
     local Watched = GetWatched();
 
-    -- Prevent Toggled Channels
-    local Permission;
-    if( IntChannelId > 0 ) then
-        Permission = Addon.CONFIG:GetValue( 'Channels' )[ ChannelBaseName ] or false;
-
-        if( not Permission ) then
-            if( Addon:Minify( ChannelBaseName ):find( 'trade' ) ) then
-                Permission = Addon.CONFIG:GetValue( 'Channels' )[ 'Trade' ];
-            end
+    -- Override for monitored messages
+    if( Watched or Mentioned ) then
+        if( Addon.CONFIG:GetValue( 'BypassTypes' ) ) then
+            Ignored = false;
         end
+    end
 
-        if( Permission and Permission.Allowed == false ) then
-            --print( 'blocking',ChannelBaseName )
-            IgnoredMessage = true;
-        end
+    -- Ignored
+    if( Ignored ) then
+        return true;
+    end
 
-        -- Override for monitored messages
-        if( Watched or Mentioned ) then
-            if( Addon.CONFIG:GetValue( 'BypassTypes' ) ) then
-                IgnoredMessage = false;
-            end
+    -- Cannot Process
+    if( CannotProcess ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end
     end
 
@@ -241,13 +230,34 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
+    -- Invite check
+    if( ChatType:find( 'WHISPER' ) and Addon.CONFIG:GetValue( 'AutoInvite' ) ) then
+        if( Addon:Minify( TextToFilter ) == 'inv' ) then
+            if( GetNumGroupMembers and GetNumGroupMembers() > 4 ) then
+                if( ConvertToRaid ) then
+                    ConvertToRaid();
+                elseif( C_PartyInfo and C_PartyInfo.ConvertToRaid ) then
+                    C_PartyInfo:ConvertToRaid();
+                end
+            end
+            InviteUnit( SenderName );
+        end
+    end
+
+    -- Format Timestamp
+    MessageText = Addon.APP:PrependTimeStamp( MessageText );
+
     -- Channel Colors
     local HighLightColor = {};
     local DBChannels = Addon.DB:GetPersistence().Channels;
     if( tonumber( IntChannelId ) > 0 ) then
         if( DBChannels[ ChannelBaseName ] and DBChannels[ ChannelBaseName ].Color ) then
             HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ ChannelBaseName ].Color );
-            MessageText = CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( MessageText );
+            MessageText = CreateColor( HighLightColor.r, 
+                HighLightColor.g, 
+                HighLightColor.b, 
+                HighLightColor.a 
+            ):WrapTextInColorCode( MessageText );
         end
     end
 
@@ -276,7 +286,8 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     -- Watched
     if( Watched ) then
         MessageText = MessageText
-            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( '|Watched: '..tostring( Watched ) );
+            ..CreateColor( HighLightColor.r, HighLightColor.g, 
+            HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( '|Watched: '..tostring( Watched ) );
     end
 
     -- Mentioned
