@@ -174,8 +174,8 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         Mentioned = Word;
     end
     if( Addon.CONFIG:GetValue( 'MentionAlert' ) ) then
-        if( Addon:Minify( TextToFilter ):find( Addon:Minify( MyPlayerName ) ) ) then
-            Mentioned = '|Mentioned:'..MyPlayerName;
+        if( Addon:Minify( TextToFilter ):find( Addon:Minify( MyName ) ) ) then
+            Mentioned = '|Mentioned:'..MyName;
         end
     end
     local AliasList = Addon.CONFIG:GetAliasList();
