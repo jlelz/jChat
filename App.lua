@@ -175,14 +175,14 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     if( Addon.CONFIG:GetValue( 'MentionAlert' ) ) then
         if( Addon:Minify( TextToFilter ):find( Addon:Minify( MyPlayerName ) ) ) then
-            Mentioned = MyPlayerName;
+            Mentioned = '|Mentioned:'..MyPlayerName;
         end
     end
     local AliasList = Addon.CONFIG:GetAliasList();
     if( #AliasList > 0 ) then
         for _,Alias in pairs( AliasList ) do
             if( Addon:Minify( TextToFilter ):find( Addon:Minify( Alias ) ) ) then
-                Mentioned = Alias;
+                Mentioned = '|Mentioned:'..Alias;
             end
         end
     end
@@ -287,13 +287,13 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     if( Watched ) then
         MessageText = MessageText
             ..CreateColor( HighLightColor.r, HighLightColor.g, 
-            HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( '|Watched: '..tostring( Watched ) );
+            HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Watched ) );
     end
 
     -- Mentioned
     if( Mentioned ) then
         MessageText = MessageText
-            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( '|Mentioned: '..tostring( Mentioned ) );
+            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Mentioned ) );
     end
 
     -- Audible Alert
