@@ -74,6 +74,11 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         _,
         LBox,
     IconReplacement = unpack( TableValues );
+    if( issecretvalue( SenderName ) ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
+    end
 
     local Permission;
     if( IntChannelId > 0 ) then
@@ -86,9 +91,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
 
     -- Invalid Sender
-    if( issecretvalue( SenderName ) ) then
-        CannotProcess = true;
-    end
     if( not SenderName or SenderName == nil or SenderName == '' ) then
         CannotProcess = true;
     end
@@ -99,18 +101,14 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     if( #IgnoredMessages > 0 ) then
         for i,IgnoredMessage in ipairs( IgnoredMessages ) do
             if( Addon:Minify( TextToFilter ):find( Addon:Minify( IgnoredMessage ) ) ) then
-                if( not issecretvalue( SenderName ) ) then
-                    if( not Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
-                        Ignored = true;
-                    end
+                if( not Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
+                    Ignored = true;
                 end
             end
         end
         for i,IgnoredIdiot in ipairs( IgnoredMessages ) do
-            if( not issecretvalue( SenderName ) ) then
-                if( Addon:Minify( SenderName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
-                    Ignored = true;
-                end
+            if( Addon:Minify( SenderName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
+                Ignored = true;
             end
         end
     end
