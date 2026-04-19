@@ -1,4 +1,6 @@
 local _, Addon = ...;
+local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME;
+local ChatFrame = DEFAULT_CHAT_FRAME;
 
 Addon.CONFIG = CreateFrame( 'Frame' );
 Addon.CONFIG:RegisterEvent( 'ADDON_LOADED' );
@@ -603,13 +605,18 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Extend chat history to 10,000 lines',
                     arg = 'ScrollBack',
                     set = function( Info,Value )
-                        Addon.CONFIG:SetValue( Info.arg,Value );
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
 
-                        local Value = Addon.CONFIG:GetValue( 'ScrollBack' );
-                        if( Value ) then
-                            FCF_GetCurrentChatFrame():SetMaxLines( 10000 );
-                        else
-                            FCF_GetCurrentChatFrame():SetMaxLines( 128 );
+                            if( Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
+
+                                Frame:SetMaxLines( 10000 );
+                            elseif( not Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
+
+                                Frame:SetMaxLines( 128 );
+                            end
                         end
                     end,
                 };
@@ -621,10 +628,19 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Enable/disable chat fading',
                     arg = 'FadeOut',
                     set = function( Info,Value )
-                        Addon.CONFIG:SetValue( Info.arg,Value );
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
 
-                        local Value = Addon.CONFIG:GetValue( 'FadeOut' );
-                        FCF_GetCurrentChatFrame():SetFading( Value );
+                            if( Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
+
+                                Frame:SetFading( true );
+                            elseif( not Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
+
+                                Frame:SetFading( false );
+                            end
+                        end
                     end,
                 };
                 Order = Order+1;
@@ -644,13 +660,18 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                     end,
                     set = function( Info,Value )
-                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
+                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
+
+                                local Font = Addon.CONFIG:GetValue( 'Font' );
+
+                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                            end
                         end
-                        local Font = Addon.CONFIG:GetValue( 'Font' );
-                        FCF_GetCurrentChatFrame():SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
-                        FCF_GetCurrentChatFrame():SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                        FCF_GetCurrentChatFrame():SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
                     end,
                     values = {
                         skurri = 'skurri',
@@ -672,11 +693,18 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                     end,
                     set = function( Info,Value )
-                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
+                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
+
+                                local Font = Addon.CONFIG:GetValue( 'Font' );
+
+                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                            end
                         end
-                        local Font = Addon.CONFIG:GetValue( 'Font' );
-                        FCF_GetCurrentChatFrame():SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                     end,
                     values = {
                         [10] = 10,
@@ -1019,7 +1047,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
 
         Addon.CONFIG.RegisterCallbacks = function( self )
             hooksecurefunc( 'ToggleChatMessageGroup',function( Checked,Group )
-                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( FCF_GetCurrentChatFrame(),Group ) ~= nil ) then
+                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatFrame,Group ) ~= nil ) then
                     if( Addon.DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
                         Addon.DB:GetPersistence().ChatGroups[ Group ] = Checked;
                     end

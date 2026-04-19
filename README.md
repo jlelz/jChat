@@ -13,7 +13,7 @@
 Interface > Addons UI
 
 ## Platforms
-UI works with Classic Era, Classic Wrath and Retail
+Currently only testing retail. It may work for classic or not
 
 ## Issues
 https://github.com/jlelz/jChat/issues

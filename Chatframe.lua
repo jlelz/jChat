@@ -10,6 +10,7 @@ local C_Club = C_Club;
 local CURRENT_CHAT_FRAME_ID = CURRENT_CHAT_FRAME_ID;
 local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK;
 local FCF_GetCurrentChatFrame = FCF_GetCurrentChatFrame;
+local ChatFrame = DEFAULT_CHAT_FRAME;
 
 Addon.CHAT = CreateFrame( 'Frame' );
 Addon.CHAT:RegisterEvent( 'ADDON_LOADED' );
@@ -36,10 +37,10 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return bool
         Addon.CHAT.IsChannelJoined = function( self,ChannelName )
             if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                Addon:Dump( FCF_GetCurrentChatFrame().channelList );
+                Addon:Dump( ChatFrame.channelList );
             end
 
-            for Id,Name in pairs( FCF_GetCurrentChatFrame().channelList ) do
+            for Id,Name in pairs( ChatFrame.channelList ) do
                 if( Addon:Minify( ChannelName ) == Addon:Minify( Name ) ) then
                     return true;
                 end
@@ -58,19 +59,19 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( ChannelName ) then
                 local Type,Name = JoinPermanentChannel( ChannelName );
 
-                local NumEntries = #FCF_GetCurrentChatFrame().channelList or 0;
+                local NumEntries = #ChatFrame.channelList or 0;
 
-                local PreviousEntry = FCF_GetCurrentChatFrame().channelList[tonumber( ChannelId )] or nil;
+                local PreviousEntry = ChatFrame.channelList[tonumber( ChannelId )] or nil;
 
-                FCF_GetCurrentChatFrame().channelList[tonumber( ChannelId )] = ChannelName;
+                ChatFrame.channelList[tonumber( ChannelId )] = ChannelName;
 
                 if( PreviousEntry ) then
-                    FCF_GetCurrentChatFrame().channelList[NumEntries+1] = PreviousEntry
+                    ChatFrame.channelList[NumEntries+1] = PreviousEntry
                 end
                 if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                     Addon.FRAMES:Debug( 'Joined',ChannelName,'Position',tonumber( ChannelId ) );
                 end
-                return Addon:Minify( FCF_GetCurrentChatFrame().channelList[tonumber( ChannelId )] ) == Addon:Minify( ChannelName );
+                return Addon:Minify( ChatFrame.channelList[tonumber( ChannelId )] ) == Addon:Minify( ChannelName );
             end
         end
 
@@ -86,7 +87,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                     if( tonumber( ChannelId ) > 0 ) then
                         LeaveChannelByName( ChannelName );
-                        FCF_GetCurrentChatFrame().channelList[tonumber( ChannelId )] = nil;
+                        ChatFrame.channelList[tonumber( ChannelId )] = nil;
                     end
                 end
             end
@@ -98,7 +99,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  string  ChannelName
         --  @return int
         Addon.CHAT.GetChannelId = function( self,ChannelName )
-            for Id,Name in pairs( FCF_GetCurrentChatFrame().channelList ) do
+            for Id,Name in pairs( ChatFrame.channelList ) do
                 if( Addon:Minify( ChannelName ) == Addon:Minify( Name ) ) then
                     return Id;
                 end
@@ -111,7 +112,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  string  Id
         --  @return int
         Addon.CHAT.GetChannelName = function( self,ChannelId )
-            for Id,Name in pairs( FCF_GetCurrentChatFrame().channelList ) do
+            for Id,Name in pairs( ChatFrame.channelList ) do
                 if( tonumber( Id ) == tonumber( ChannelId ) ) then
                     return Name;
                 end
@@ -248,9 +249,9 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         -- @return void
         Addon.CHAT.SetGroup = function( self,Group,Value )
             if ( Value ) then
-                ChatFrame_AddMessageGroup( FCF_GetCurrentChatFrame(),Group );
+                ChatFrame_AddMessageGroup( ChatFrame,Group );
             else
-                ChatFrame_RemoveMessageGroup( FCF_GetCurrentChatFrame(),Group );
+                ChatFrame_RemoveMessageGroup( ChatFrame,Group );
             end
         end
 
@@ -259,16 +260,6 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --
         --  @return void
         Addon.CHAT.Init = function( self )
-            -- Current Selected Chat Tab
-            -- Blizz Code Relies on CURRENT_CHAT_FRAME_ID
-            -- /Interface/AddOns/Blizzard_ChatFrameBase/Mainline/FloatingChatFrame.lua
-            local SelectedFrame = FCFDock_GetSelectedWindow( GENERAL_CHAT_DOCK );
-            if( SelectedFrame ) then
-                CURRENT_CHAT_FRAME_ID = SelectedFrame:GetID();
-            else
-                CURRENT_CHAT_FRAME_ID = DEFAULT_CHAT_FRAME:GetID();
-            end
-
             -- Update Channel Colors from DB
             for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
                 if( Channel.Id ) then
@@ -370,7 +361,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end );
             -- Editbox Focus
-            FCF_GetCurrentChatFrame().editBox:HookScript( 'OnEditFocusGained',function( self,... )
+            ChatFrame.editBox:HookScript( 'OnEditFocusGained',function( self,... )
 
                 local ChannelId = self:GetAttribute( 'channelTarget' );
                 local ChannelName = Addon.CHAT:GetChannelName( ChannelId );
@@ -384,12 +375,9 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end
                 end
             end );
-            -- New Chat Tab
-            -- Unfortunately, FCF_OpenNewWindow and FCF_DockFrame does not work for this
-            -- that seems super strange to me
-            -- so this is a hack
-            hooksecurefunc( 'FCF_SetChatWindowFontSize',function( self,Frame,FontSize )
-                local Frame = Frame or self;
+            -- New Tab
+            hooksecurefunc( 'FCF_CopyChatSettings',function( NewFrame,ExistingFrame )
+                local Frame = NewFrame;
 
                 -- Fading
                 local MyValue = Addon.CONFIG:GetValue( 'FadeOut' );
@@ -403,12 +391,11 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Frame:SetMaxLines( 128 );
                 end
 
-                -- Scrolling
+                -- Font
                 local Font = Addon.CONFIG:GetValue( 'Font' );
                 Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                 Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
                 Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-
             end );
         end
 

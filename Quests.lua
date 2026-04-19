@@ -4,8 +4,7 @@ Addon.QUESTS = CreateFrame( 'Frame' );
 Addon.QUESTS:RegisterEvent( 'ADDON_LOADED' );
 Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
     if( AddonName == 'jChat' ) then
-
-        local MAX_QUEST_LOG_INDEX = 75;
+        
         --
         --  Accept Quest
         --

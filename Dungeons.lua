@@ -1,4 +1,6 @@
 local _, Addon = ...;
+local GetNumSavedInstances = GetNumSavedInstances;
+local GetSavedInstanceInfo = GetSavedInstanceInfo;
 
 Addon.DUNGEONS = CreateFrame( 'Frame' );
 Addon.DUNGEONS:RegisterEvent( 'ADDON_LOADED' );

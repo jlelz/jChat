@@ -1,6 +1,18 @@
 local _, Addon = ...;
-local strsub = strsub;
-local select = select;
+local strsub = string.sub;
+local issecretvalue = issecretvalue;
+
+local C_ChatInfo = C_ChatInfo;
+local C_Club = C_Club;
+local C_PartyInfo = C_PartyInfo;
+
+local ConvertToRaid = ConvertToRaid;
+local WrapTextInColorCode = WrapTextInColorCode;
+local InCombatLockdown = InCombatLockdown;
+local CreateColor = CreateColor;
+local UnitName = UnitName;
+local BetterDate = BetterDate;
+
 Addon.APP = CreateFrame( 'Frame' );
 
 Addon.APP.PrependTimeStamp = function( self,MessageText )
@@ -32,8 +44,7 @@ Addon.APP.PrependTimeStamp = function( self,MessageText )
     return MessageText;
 end
 
-Addon.APP.CanUnPackArgs = function( self,... )
-    local Value = select( 4,... );
+Addon.APP.CanUnPackArgs = function( self,Value )
     if( Value and type( Value ) == 'table' ) then
         return true;
     end
@@ -43,17 +54,42 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
     local WhisperTypeInfo = ChatTypeInfo['WHISPER'];
-    if( not Addon.APP:CanUnPackArgs( ... ) ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
-        end
-    end
+    local AcceptedTypes = {
+        CHAT_MSG_CHANNEL = true,
+        CHAT_MSG_COMMUNITIES_CHANNEL = true,
+        CHAT_MSG_CHANNEL_NOTICE_USER = true,
+        CHAT_MSG_WHISPER = true
+    };
     local CannotProcess;
-    if( issecretvalue( MessageText ) or InCombatLockdown() ) then
+    if( issecretvalue( MessageText ) ) then
+        CannotProcess = true;
+    end
+    if( InCombatLockdown() ) then
         CannotProcess = true;
     end
     if( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() ) then
         CannotProcess = true;
+    end
+
+    -- Stop Early if Cannot Unpack
+    if( not Addon.APP:CanUnPackArgs( select( 4,... ) ) ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
+    end
+
+    -- Stop Early for Unrecognized Message Types
+    if( not AcceptedTypes[ ChatType ] ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
+    end
+
+    -- Stop Early for Combat
+    if( CannotProcess ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
     end
 
     -- Not sure why this is a table... lol
@@ -74,12 +110,22 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         _,
         LBox,
     IconReplacement = unpack( TableValues );
+
+    -- Stop Early for Invalid Sender
+    if( not SenderName or SenderName == nil or SenderName == '' ) then
+        if( Addon.CHAT.Hooks[self] ) then
+            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        end
+    end
+
+    -- Stop Early for Secret Sender
     if( issecretvalue( SenderName ) ) then
         if( Addon.CHAT.Hooks[self] ) then
             return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end
     end
 
+    -- Retrieve Channel Permission Value
     local Permission;
     if( IntChannelId > 0 ) then
         Permission = Addon.CONFIG:GetValue( 'Channels' )[ ChannelBaseName ] or false;
@@ -90,25 +136,15 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
-    -- Invalid Sender
-    if( not SenderName or SenderName == nil or SenderName == '' ) then
-        CannotProcess = true;
-    end
-
     -- Ignored Message
     local Ignored;
     local IgnoredMessages = Addon.CONFIG:GetIgnores();
     if( #IgnoredMessages > 0 ) then
-        for i,IgnoredMessage in ipairs( IgnoredMessages ) do
+        for _,IgnoredMessage in pairs( IgnoredMessages ) do
             if( Addon:Minify( TextToFilter ):find( Addon:Minify( IgnoredMessage ) ) ) then
                 if( not Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
                     Ignored = true;
                 end
-            end
-        end
-        for i,IgnoredIdiot in ipairs( IgnoredMessages ) do
-            if( Addon:Minify( SenderName ):find( Addon:Minify( IgnoredIdiot ) ) ) then
-                Ignored = true;
             end
         end
     end
@@ -116,7 +152,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         Ignored = true;
     end
 
-    -- Watch check
+    -- Watch Check
     local function GetWatched()
         return Watched;
     end
@@ -140,7 +176,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
-    -- Queue check
+    -- Queue Check
     local Dungeons = Addon.DUNGEONS:GetDungeonsF();
     local DungeonQueue = Addon.DB:GetPersistence().DungeonQueue or {};
     for ABBREV,IsQueued in pairs( DungeonQueue ) do
@@ -171,7 +207,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     SetWatched( Watched );
 
-    -- Mention check
+    -- Mention Check
     local function GetMentioned()
         return Mentioned;
     end
@@ -196,7 +232,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local Mentioned = GetMentioned();
     local Watched = GetWatched();
 
-    -- Override for monitored messages
+    -- Override for Monitored Messages
     if( Watched or Mentioned ) then
         if( Addon.CONFIG:GetValue( 'BypassTypes' ) ) then
             Ignored = false;
@@ -208,14 +244,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         return true;
     end
 
-    -- Cannot Process
-    if( CannotProcess ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
-        end
-    end
-
-    -- url Copy
+    -- URL Copy
     local function GetURLPatterns()
         return {
             { '[a-z]*://[^ >,;]*','%s' },
@@ -235,7 +264,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
-    -- Invite check
+    -- Invite Check
     if( ChatType:find( 'WHISPER' ) and Addon.CONFIG:GetValue( 'AutoInvite' ) ) then
         if( Addon:Minify( TextToFilter ) == 'inv' ) then
             if( GetNumGroupMembers and GetNumGroupMembers() > 4 ) then
@@ -291,8 +320,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     -- Watched
     if( Watched ) then
         MessageText = MessageText
-            ..CreateColor( HighLightColor.r, HighLightColor.g, 
-            HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Watched ) );
+            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Watched ) );
     end
 
     -- Mentioned
@@ -319,11 +347,9 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     MessageText = StringArgs .. MessageText;
     ]]
-    -- Call Original AddMessage
+    -- Default Handler
     if( Addon.CHAT.Hooks[self] ) then
-        if( not IgnoredMessage ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
-        end
+        return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
     end
 end
 
@@ -352,7 +378,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
     Addon.QUESTS:RebuildQuests();
 
     -- Joins
-    local R,G,B,A = unpack( Addon.CHAT:GetBaseColor() );
     local DBChannels = Addon.DB:GetPersistence().Channels;
     local FrameChannels = Addon.CHAT:GetChannels();
 
@@ -391,7 +416,10 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             HighLightColor.b or 1, 
             HighLightColor.a or 1 ):WrapTextInColorCode( 'You have joined '..ChannelLink );
 
-        FCF_GetCurrentChatFrame():AddMessage( JoinedText );
+        local Frame = _G[ 'ChatFrame'..1 ];
+        if( Frame ) then
+            Frame:AddMessage( JoinedText );
+        end
     end
 
     Addon.FRAMES:Notify( 'Done' );
