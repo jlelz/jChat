@@ -1,6 +1,6 @@
 local _, Addon = ...;
 local strsub = string.sub;
-local issecretvalue = issecretvalue;
+local issecretvalue = issecretvalue or function()end;
 
 local C_ChatInfo = C_ChatInfo;
 local C_Club = C_Club;
