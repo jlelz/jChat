@@ -1077,7 +1077,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end );
             hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
-                local ChannelId = Addon.CHAT:GetChannelId( ChannelName ) or Addon.DB:GetPersistence().Channels[ ChannelName ].Id;
+                local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id or Addon.CHAT:GetChannelId( ChannelName );
                 if( ChannelId ) then
                     ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
                 end
