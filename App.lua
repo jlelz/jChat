@@ -360,6 +360,7 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
     Addon.FRAMES:Notify( 'Prepping..please wait' );
 
     -- Initialize
+    local Frame = _G[ 'ChatFrame'..1 ];
     Addon.DB:Init();
     Addon.QUESTS:Init();
     Addon.CHAT:Init();
@@ -368,6 +369,20 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
     -- Callbacks
     Addon.CONFIG:RegisterCallbacks();
     Addon.CHAT:RegisterCallbacks();
+    hooksecurefunc( 'SetItemRef',function( Pattern,FullText )
+        local linkType,addon,param1 = strsplit( ':',Pattern );
+        if( linkType == 'addon' and addon == 'jChat' ) then
+            if( param1 == 'url' ) then
+                if( Frame ) then
+                    Frame.editBox:SetText( FullText:match( ">(.-)<" ) );
+
+                    ChatEdit_ActivateChat( Frame.editBox );
+                    
+                    Frame.editBox:HighlightText();
+                end
+            end
+        end
+    end );
 
     -- Quests
     if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
@@ -416,7 +431,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
             HighLightColor.b or 1, 
             HighLightColor.a or 1 ):WrapTextInColorCode( 'You have joined '..ChannelLink );
 
-        local Frame = _G[ 'ChatFrame'..1 ];
         if( Frame ) then
             Frame:AddMessage( JoinedText );
         end
