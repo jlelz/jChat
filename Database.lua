@@ -88,6 +88,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     184 / 255,
                     1,
                 },
+                ClassColors = true,
                 AutoInvite = true,
                 DungeonQueue = {
                 },

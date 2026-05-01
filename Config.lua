@@ -734,6 +734,24 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     desc = 'Timestamp format',
                     arg = 'showTimestamps',
                 };
+                Order = Order + 1;
+                Settings.ClassColors = {
+                    type = 'toggle',
+                    order = Order,
+                    name = 'Class Colors',
+                    desc = 'Enable/Disable Chat Class Colors',
+                    arg = 'ClassColors',
+                    set = function( Info,Value )
+                        Addon.DB:GetPersistence()[ Info.arg ] = Value;
+
+                        for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
+                            if( ChannelData.Id ) then
+                                ToggleChatColorNamesByClassGroup( Value,tostring( 'CHANNEL'..ChannelData.Id ) );
+                            end
+                        end
+                    end,
+                };
+
                 Order = Order+1;
                 Settings.LinksEnabled = {
                     type = 'toggle',
@@ -1055,7 +1073,13 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             end );
             hooksecurefunc( 'ToggleChatColorNamesByClassGroup',function( Checked,Group )
                 if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'App.CONFIG','ToggleChatColorNamesByClassGroup',Checked,Group );
+                    Addon.FRAMES:Debug( 'App.CONFIG','ToggleChatColorNamesByClassGroup',tostring( Checked ),Group );
+                end
+            end );
+            hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
+                local ChannelId = Addon.CHAT:GetChannelId( ChannelName ) or Addon.DB:GetPersistence().Channels[ ChannelName ].Id;
+                if( ChannelId ) then
+                    ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
                 end
             end );
         end
