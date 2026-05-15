@@ -480,7 +480,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             set = function( Info,Value )
                                 Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed = Value;
                             end,
-                            name = '[['..ChannelData.Id..']'..ChannelData.LongName..']',
+                            name = '[['..ChannelData.Id..']'..ChannelData.Name..']',
                             desc = 'Allow '..ChannelData.Name..' messages',
                             arg = ChannelData.Name,
                         };
@@ -542,7 +542,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                     end
                                 end
                             end,
-                            name = '[['..ChannelData.Id..']'..ChannelData.LongName..']',
+                            name = '[['..ChannelData.Id..']'..ChannelData.Name..']',
                             desc = 'Set the color of '..ChannelData.Name..' chat',
                             arg = ChannelData.Name,
                             --hasAlpha = true,
