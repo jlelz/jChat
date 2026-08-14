@@ -36,7 +36,7 @@ Addon.APP.PrependTimeStamp = function( self,MessageText )
     
     -- Prepend Timestamp
     if( FmtString ~= 'none' ) then
-        local RawTime = BetterDate( FmtString,time() );
+        local RawTime = TimeUtil.BetterDate( FmtString,time() );
         local ColoredTime = TimeStampColor:WrapTextInColorCode( RawTime );
         MessageText = ColoredTime .. MessageText
     end
