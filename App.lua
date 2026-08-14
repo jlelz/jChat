@@ -5,13 +5,13 @@ local issecretvalue = issecretvalue or function()end;
 local C_ChatInfo = C_ChatInfo;
 local C_Club = C_Club;
 local C_PartyInfo = C_PartyInfo;
+local TimeUtil = TimeUtil;
 
 local ConvertToRaid = ConvertToRaid;
 local WrapTextInColorCode = WrapTextInColorCode;
 local InCombatLockdown = InCombatLockdown;
 local CreateColor = CreateColor;
 local UnitName = UnitName;
-local BetterDate = BetterDate;
 
 Addon.APP = CreateFrame( 'Frame' );
 
