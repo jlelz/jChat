@@ -57,7 +57,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local AcceptedTypes = {
         CHAT_MSG_CHANNEL = true,
         CHAT_MSG_COMMUNITIES_CHANNEL = true,
-        CHAT_MSG_CHANNEL_NOTICE_USER = true,
         CHAT_MSG_WHISPER = true
     };
     local CannotProcess;
@@ -71,15 +70,13 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         CannotProcess = true;
     end
 
-    -- Stop Early if Cannot Unpack
-    if( not Addon.APP:CanUnPackArgs( select( 4,... ) ) ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
-        end
-    end
-
     -- Stop Early for Unrecognized Message Types
     if( not AcceptedTypes[ ChatType ] ) then
+        return true;
+    end
+
+    -- Stop Early if Cannot Unpack
+    if( not Addon.APP:CanUnPackArgs( select( 4,... ) ) ) then
         if( Addon.CHAT.Hooks[self] ) then
             return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
         end

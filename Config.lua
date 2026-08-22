@@ -949,6 +949,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 IGNORED = {
                     'IGNORED',
                 },
+                NOTICE = {
+                    'CHANNEL_NOTICE',
+                }
             };
         end
 
