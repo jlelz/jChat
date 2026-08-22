@@ -515,13 +515,11 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                             type = 'color',
                             order = Order,
                             get = function( Info )
+                                if( Addon.DB:GetPersistence().Channels[ Info.arg ] and not Addon.DB:GetPersistence().Channels[ Info.arg ].Color ) then
+                                    Addon.DB:GetPersistence().Channels[ Info.arg ].Color = Addon.CHAT:GetBaseColor();
+                                end
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil and Addon.DB:GetPersistence().Channels[ Info.arg ].Color ~= nil ) then
                                     return unpack( Addon.DB:GetPersistence().Channels[ Info.arg ].Color );
-                                else
-                                    Addon.DB:GetPersistence().Channels[ Info.arg ] = {};
-                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                        Addon.FRAMES:Debug( Info.arg,'has no Addon.DB:GetPersistence().Channels entry' );
-                                    end
                                 end
                             end,
                             set = function( Info,R,G,B,A )

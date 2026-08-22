@@ -260,6 +260,27 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --
         --  @return void
         Addon.CHAT.Init = function( self )
+
+            --[[
+            -- Subscribed Clubs
+            if( C_Club ) then
+                local SubscribedClubs = C_Club:GetSubscribedClubs();
+                for _,Club in pairs( SubscribedClubs ) do
+                    if( Club and Club.shortName ) then
+                        local ChannelName = Club.shortName:gsub( '%s+','' );
+                        if( ChannelName ) then
+                            if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                                Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Id = Club.clubid;
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Color = Addon.CHAT:GetBaseColor();
+                                Addon.DB:GetPersistence().Channels[ ChannelName ].Allowed = true;
+                            end
+                        end
+                    end
+                end
+            end
+            ]]
+
             -- Update Channel Colors from DB
             for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
                 if( Channel.Id ) then
