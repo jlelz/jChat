@@ -104,6 +104,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 return;
             end
             self.db:ResetDB();
+            C_UI.Reload();
         end
 
         --
@@ -158,6 +159,8 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
             if( not self:GetPersistence() ) then
                 return;
             end
+
+            self.db.RegisterCallback( self,'OnProfileReset','Reset' );
         end
         
         Addon.DB:UnregisterEvent( 'ADDON_LOADED' );
