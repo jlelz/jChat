@@ -147,6 +147,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     LongName = LongName,
                     Disabled = Channels[i+2],
                     Color = self:GetBaseColor(),
+                    Allowed = true,
                 };
             end
             return ChannelList;
@@ -281,6 +282,12 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             ]]
 
+            -- Initialize channels when not defined
+            for Id,ChannelData in pairs( self:GetChannels() ) do
+                if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
+                    Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = ChannelData;
+                end
+            end
             -- Update Channel Colors from DB
             for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
                 if( Channel.Id ) then
