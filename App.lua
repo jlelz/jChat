@@ -54,11 +54,7 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' );
     local ChatType = select( 3,... ) or '';
     local WhisperTypeInfo = ChatTypeInfo['WHISPER'];
-    local AcceptedTypes = {
-        CHAT_MSG_CHANNEL = true,
-        CHAT_MSG_COMMUNITIES_CHANNEL = true,
-        CHAT_MSG_WHISPER = true
-    };
+
     local CannotProcess;
     if( issecretvalue( MessageText ) ) then
         CannotProcess = true;
@@ -68,11 +64,6 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     if( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() ) then
         CannotProcess = true;
-    end
-
-    -- Stop Early for Unrecognized Message Types
-    if( not AcceptedTypes[ ChatType ] ) then
-        return true;
     end
 
     -- Stop Early if Cannot Unpack
