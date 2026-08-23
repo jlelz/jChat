@@ -78,7 +78,6 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     PET = false,
                     ERRORS = true,
                     IGNORED = true,
-                    CHANNEL = true,
                 },
                 BypassTypes = true,
                 showTimestamps = 'hour_min_sec_12_ext',
