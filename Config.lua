@@ -523,6 +523,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 end
                             end,
                             set = function( Info,R,G,B,A )
+                                local InternalCall = true;
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
                                     if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                         Addon.FRAMES:Debug( 'Addon.CONFIG:GetSettings()','Calling set() for',Info.arg,'Chat Color' );
@@ -532,11 +533,11 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                     if( Addon:Minify( Community ) == 'community' ) then
                                         local Channel = Chat_GetCommunitiesChannel( ClubId,StreamId );
                                     elseif( Channel ) then
-                                        ChangeChatColor( Channel,R,G,B,A );
+                                        ChangeChatColor( Channel,R,G,B,A,InternalCall );
                                     end
                                     local Channel = Addon.CHAT:GetChannelId( Info.arg );
                                     if( Channel ) then
-                                        ChangeChatColor( 'CHANNEL'..tostring( Channel ),R,G,B,A );
+                                        ChangeChatColor( 'CHANNEL'..tostring( Channel ),R,G,B,A,InternalCall );
                                     end
                                 end
                             end,
@@ -949,9 +950,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 IGNORED = {
                     'IGNORED',
                 },
-                NOTICE = {
-                    'CHANNEL_NOTICE',
-                }
             };
         end
 
