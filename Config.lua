@@ -1081,6 +1081,13 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
                 end
             end );
+            hooksecurefunc( 'ChangeChatColor',function( ChannelName,R,G,B,Internal )
+                if( not Internal ) then
+                    if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                        Addon.DB:GetPersistence().Channels[ ChannelName ].Color = R,G,B;
+                    end
+                end
+            end );
         end
         self:UnregisterEvent( 'ADDON_LOADED' );
     end
