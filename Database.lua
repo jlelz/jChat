@@ -12,7 +12,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.DB.GetDefaults = function( self )
             return {
                 Font = {
-                    Family = 'ARIALN',
+                    Family = 'FRIZQT__',
                     Size = 14,
                     Flags = 'THINOUTLINE',
                     Shadow = {
@@ -80,7 +80,7 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     IGNORED = true,
                 },
                 BypassTypes = true,
-                showTimestamps = 'hour_min_sec_12_ext',
+                showTimestamps = 'none',
                 TimeColor = {
                     184 / 255,
                     184 / 255,
