@@ -668,7 +668,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                                 Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                                 Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.y );
                             end
                         end
                     end,
@@ -701,7 +701,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                                 Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                                 Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.y );
                             end
                         end
                     end,
@@ -1076,9 +1076,12 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end );
             hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
-                local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id or Addon.CHAT:GetChannelId( ChannelName );
-                if( ChannelId ) then
-                    ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
+                local Channel = Addon.DB:GetPersistence().Channels[ ChannelName ];
+                if( Channel ) then
+                    local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id or Addon.CHAT:GetChannelId( ChannelName );
+                    if( ChannelId ) then
+                        ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
+                    end
                 end
             end );
             hooksecurefunc( 'ChangeChatColor',function( ChannelName,R,G,B,Internal )
