@@ -516,7 +516,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
 
             -- Seasonal rules
-            local Seasonal = ( Addon:IsClassic() and tonumber( #C_Engraving.GetRuneCategories(false, false) ) > 0 );
+            local Seasonal = ( Addon:IsClassic() and ( C_Engraving and C_Engraving.GetRuneCategories ) and tonumber( #C_Engraving.GetRuneCategories(false, false) ) > 0 );
             local Rules = GetDungeonRules( Seasonal );
             for Key,Instance in pairs( Rules ) do
                 Instances[ Key ] = Instance;
@@ -534,7 +534,7 @@ Addon.DUNGEONS:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
 
             -- Seasonal rules
-            local Seasonal = ( Addon:IsClassic() and tonumber( #C_Engraving.GetRuneCategories(false, false) ) > 0 );
+            local Seasonal = ( Addon:IsClassic() and ( C_Engraving and C_Engraving.GetRuneCategories ) and tonumber( #C_Engraving.GetRuneCategories(false, false) ) > 0 );
             local Rules = GetRaidRules( Seasonal );
             for Key,Instance in pairs( Rules ) do
                 Instances[ Key ] = Instance;
