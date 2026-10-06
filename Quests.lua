@@ -11,13 +11,8 @@ Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @param  list
         --  @return void
         Addon.QUESTS.AcceptQuest = function( self,... )
-            local QuestTitle,IsHeader;
-            if( Addon:IsClassic() ) then
-                QuestTitle,_,_,IsHeader = Addon:Minify( select( 1, GetQuestLogTitle( select( 1,... ) ) ) );
-            else
-                QuestTitle = Addon:Minify( C_QuestLog.GetTitleForQuestID( select( 1,... ) ) );
-            end
-            if( QuestTitle and not IsHeader ) then
+            local QuestTitle = Addon:Minify( C_QuestLog.GetTitleForQuestID( select( 1,... ) ) );
+            if( QuestTitle ) then
                 self.ActiveQuests[ QuestTitle ] = QuestTitle;
             end
         end
