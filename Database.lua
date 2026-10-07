@@ -17,9 +17,9 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Flags = 'THINOUTLINE',
                     Shadow = {
                         Color = {
-                            r = 0,
-                            g = 0,
-                            b = 0,
+                            r = 146/255,
+                            g = 69/255,
+                            b = 136/255,
                             a = 0,
                         },
                         Offset = {
@@ -42,15 +42,15 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 ScrollBack = true,
                 QuestAlert = true,
                 ChannelColor = {
-                    254 / 255,
-                    191 / 255,
-                    191 / 255,
+                    254/255,
+                    191/255,
+                    191/255,
                     1,
                 },
                 AlertColor = {
-                    224 / 255,
-                    157 / 255,
-                    240 / 255,
+                    224/255,
+                    157/255,
+                    240/255,
                     1,
                 },
                 AlertChannel = 'SFX',
@@ -82,9 +82,9 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 BypassTypes = true,
                 showTimestamps = 'none',
                 TimeColor = {
-                    184 / 255,
-                    184 / 255,
-                    184 / 255,
+                    184/255,
+                    184/255,
+                    184/255,
                     1,
                 },
                 ClassColors = true,

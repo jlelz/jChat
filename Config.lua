@@ -651,73 +651,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     arg = 'AutoInvite',
                 };
                 Order = Order+1;
-                Settings.FontFamily = {
-                    type = 'select',
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                            return Addon.DB:GetPersistence().Font[ Info.arg ];
-                        end
-                    end,
-                    set = function( Info,Value )
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
-
-                                local Font = Addon.CONFIG:GetValue( 'Font' );
-
-                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
-                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.y );
-                            end
-                        end
-                    end,
-                    values = {
-                        skurri = 'skurri',
-                        ARIALN = 'ARIALN',
-                        MORPHEUS = 'MORPHEUS',
-                        FRIZQT__ = 'FRIZQT__',
-                    },
-                    order = Order,
-                    name = 'Font Family',
-                    desc = 'Chat Font Family',
-                    arg = 'Family',
-                };
-                Order = Order+1;
-                Settings.FontSize = {
-                    type = 'select',
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                            return Addon.DB:GetPersistence().Font[ Info.arg ];
-                        end
-                    end,
-                    set = function( Info,Value )
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
-
-                                local Font = Addon.CONFIG:GetValue( 'Font' );
-
-                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
-                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.y );
-                            end
-                        end
-                    end,
-                    values = {
-                        [10] = 10,
-                        [12] = 12,
-                        [14] = 14,
-                        [16] = 16,
-                        [18] = 18,
-                    },
-                    order = Order,
-                    name = 'Font Size',
-                    desc = 'Chat Font Size',
-                    arg = 'Size',
-                };
-                Order = Order+1;
                 Settings.ShowTimestamps = {
                     type = 'select',
                     values = {
@@ -758,6 +691,114 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     name = 'Links',
                     desc = 'Automatically convert links to clickable',
                     arg = 'LinksEnabled',
+                };
+
+                Order = Order+1;
+                Settings.FontSection = {
+                    type = 'header',
+                    order = Order,
+                    name = 'Font',
+                };
+                Order = Order+1;
+                Settings.FontFamily = {
+                    type = 'select',
+                    get = function( Info )
+                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                            return Addon.DB:GetPersistence().Font[ Info.arg ];
+                        end
+                    end,
+                    set = function( Info,Value )
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
+                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
+
+                                local Font = Addon.CONFIG:GetValue( 'Font' );
+                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+
+                                if( Frame.RefreshLayout ) then
+                                    Frame:RefreshLayout();
+                                end
+                            end
+                        end
+                    end,
+                    values = {
+                        skurri = 'skurri',
+                        ARIALN = 'ARIALN',
+                        MORPHEUS = 'MORPHEUS',
+                        FRIZQT__ = 'FRIZQT__',
+                    },
+                    order = Order,
+                    name = 'Font Family',
+                    desc = 'Chat Font Family',
+                    arg = 'Family',
+                };
+                Order = Order+1;
+                Settings.FontSize = {
+                    type = 'select',
+                    get = function( Info )
+                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                            return Addon.DB:GetPersistence().Font[ Info.arg ];
+                        end
+                    end,
+                    set = function( Info,Value )
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
+                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
+
+                                local Font = Addon.CONFIG:GetValue( 'Font' );
+                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+
+                                if( Frame.RefreshLayout ) then
+                                    Frame:RefreshLayout();
+                                end
+                            end
+                        end
+                    end,
+                    values = {
+                        [10] = 10,
+                        [12] = 12,
+                        [14] = 14,
+                        [16] = 16,
+                        [18] = 18,
+                    },
+                    order = Order,
+                    name = 'Font Size',
+                    desc = 'Chat Font Size',
+                    arg = 'Size',
+                };
+                Order = Order+1;
+                Settings.FontShadowColor = {
+                    type = 'color',
+                    order = Order,
+                    get = function( Info )
+                        if( Addon.DB:GetPersistence().Font.Shadow.Color ~= nil ) then
+                            local Color = Addon.DB:GetPersistence().Font.Shadow.Color;
+                            return Color.r,Color.g,Color.b,Color.a;
+                        end
+                    end,
+                    set = function( Info,R,G,B,A )
+
+                        for i = 1, 10 do
+                            local Frame = _G[ 'ChatFrame'..i ];
+                            if( Frame and Addon.DB:GetPersistence().Font.Shadow.Color ~= nil ) then
+                                Addon.DB:GetPersistence().Font.Shadow.Color = { r=R,g=G,b=B,a=A };
+
+                                local Font = Addon.CONFIG:GetValue( 'Font' );
+                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                            end
+                        end
+                    end,
+                    name = 'Font Shadow Color',
+                    desc = 'Chat Font text shadow color',
+                };
+
+                Order = Order+1;
+                Settings.Font = {
+                    type = 'header',
+                    order = Order,
+                    name = 'Development',
                 };
                 Order = Order+1;
                 Settings.Debug = {
