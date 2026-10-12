@@ -293,6 +293,55 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( Channel.Id ) then
                     ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Channel.Color ) );
                 end
+
+                if( Addon:Minify( UnitName( 'player' ) ):find( 'blasfemy' ) ) then
+                    local Colors = {
+                        lookingForGroup = {
+                            r = 116/255,
+                            g = 51/255,
+                            b = 168/255,
+                            a = 1,
+                        },
+                        federation = {
+                            r = 97/255,
+                            g = 122/255,
+                            b = 254/255,
+                            a = 1,
+                        },
+                        jlelz = {
+                            r = 238/255,
+                            g = 29/255,
+                            b = 254/255,
+                            a = 1,
+                        },
+                        erp = {
+                            r = 212/255,
+                            g = 85/255,
+                            b = 254/255,
+                            a = 1,
+                        },
+                        trade = {
+                            r = 151/255,
+                            g = 114/255,
+                            b = 114/255,
+                            a = 1,
+                        },
+                    };
+                    for ChannelName,ColorData in pairs( Colors ) do
+                        if( Addon:Minify( Channel.Name ):find( Addon:Minify( ChannelName ) ) ) then
+                            local Color = {
+                                ColorData.r,
+                                ColorData.g,
+                                ColorData.b,
+                                ColorData.a,
+                            };
+                            if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                Addon.FRAMES:Debug( 'updating','CHANNEL'..tostring(Channel.Id),tostring(Channel.Name),'for',tostring(UnitName( 'player' )) );
+                            end
+                            ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Color ) );
+                        end
+                    end
+                end
             end
 
             -- Hook All Messages
