@@ -96,25 +96,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     --hasAlpha = true,
                 };
                 Order = Order+1;
-                Settings.TimeColor = {
-                    type = 'color',
-                    order = Order,
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            return unpack( Addon.DB:GetPersistence()[ Info.arg ] );
-                        end
-                    end,
-                    set = function( Info,R,G,B,A )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
-                        end
-                    end,
-                    name = 'Time Color',
-                    desc = 'Set the color of Timestamps',
-                    arg = 'TimeColor',
-                    --hasAlpha = true,
-                };
-                Order = Order+1;
                 Settings.AlertQuest = {
                     type = 'toggle',
                     order = Order,
@@ -529,6 +510,10 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                         Addon.FRAMES:Debug( 'Addon.CONFIG:GetSettings()','Calling set() for',Info.arg,'Chat Color' );
                                     end
                                     Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
+                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                        Addon.FRAMES:Debug( 'Set',Info.arg,'Chat Color to',R,G,B,A );
+                                    end
+
                                     local Community,ClubId,StreamId = unpack( Addon:Explode( Info.arg,':' ) );
                                     if( Addon:Minify( Community ) == 'community' ) then
                                         local Channel = Chat_GetCommunitiesChannel( ClubId,StreamId );
@@ -536,8 +521,15 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                         ChangeChatColor( Channel,R,G,B,A,InternalCall );
                                     end
                                     local Channel = Addon.CHAT:GetChannelId( Info.arg );
+                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                        Addon.FRAMES:Debug( 'Channel',Channel );
+                                    end
+
                                     if( Channel ) then
                                         ChangeChatColor( 'CHANNEL'..tostring( Channel ),R,G,B,A,InternalCall );
+                                        if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                            Addon.FRAMES:Debug( 'Called','ChangeChatColor with args','CHANNEL'..tostring( Channel ),R,G,B,A,tostring( InternalCall ) );
+                                        end
                                     end
                                 end
                             end,
@@ -665,6 +657,25 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     name = 'Timestamps',
                     desc = 'Timestamp format',
                     arg = 'showTimestamps',
+                };
+                Order = Order+1;
+                Settings.TimeColor = {
+                    type = 'color',
+                    order = Order,
+                    get = function( Info )
+                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                            return unpack( Addon.DB:GetPersistence()[ Info.arg ] );
+                        end
+                    end,
+                    set = function( Info,R,G,B,A )
+                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                            Addon.DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
+                        end
+                    end,
+                    name = 'Timestamps',
+                    desc = 'Timestamp Color',
+                    arg = 'TimeColor',
+                    --hasAlpha = true,
                 };
                 Order = Order + 1;
                 Settings.ClassColors = {
