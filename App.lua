@@ -394,14 +394,6 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         end
     end );
 
-    -- Quests
-    if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
-        Addon.QUESTS:EnableQuestEvents();
-    else
-        Addon.QUESTS:DisableQuestEvents();
-    end
-    Addon.QUESTS:RebuildQuests();
-
     -- Joins
     local DBChannels = Addon.DB:GetPersistence().Channels;
     local FrameChannels = Addon.CHAT:GetChannels();
