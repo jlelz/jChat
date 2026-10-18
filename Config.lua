@@ -498,9 +498,8 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 end
                             end
                         end
-                        
-                        Order = Order+1;
 
+                        Order = Order+1;
                         Settings[ ChannelData.Name..'Color' ] = {
                             type = 'color',
                             order = Order,
@@ -581,6 +580,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                         };
                                         if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                             Addon.FRAMES:Debug( 'Updating color','CHANNEL'..tostring(Channel.Id),tostring(Channel.Name) );
+                                        end
+                                        if( Addon.DB:GetPersistence().Channels[ Channel.Name ] and Addon.DB:GetPersistence().Channels[ Channel.Name ].Color ) then
+                                            Addon.DB:GetPersistence().Channels[ Channel.Name ].Color = Color;
                                         end
                                         ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Color ) );
                                     end
