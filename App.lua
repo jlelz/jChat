@@ -340,6 +340,23 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
     end
     MessageText = StringArgs .. MessageText;
     ]]
+    if( Addon.CONFIG:GetValue( 'ShortChannelNames' ) ) then
+        if( ChannelBaseName and IntChannelId > 0 ) then
+            -- This looks for string combinations like '[1. General - Orgrimmar]' or '|h[1. General]|h'
+            if ChannelBaseName:find("General") then
+                MessageText = MessageText:gsub( "General%s?-%s?[^%]]+",'GEN' );
+            elseif ChannelBaseName:find("LocalDefense") then
+                MessageText = MessageText:gsub( "LocalDefense",'LDEF' );
+            elseif ChannelBaseName:find("WorldDefense") then
+                MessageText = MessageText:gsub( "WorldDefense",'WDEF' );
+            elseif ChannelBaseName:find("LookingForGroup") then
+                MessageText = MessageText:gsub( "LookingForGroup",'LFG' );
+            elseif ChannelBaseName:find("Trade") then
+                MessageText = MessageText:gsub( "Trade%s?-%s?[^%]]+",'TRADE' );
+            end
+        end
+    end
+
     -- Default Handler
     if( Addon.CHAT.Hooks[self] ) then
         return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
