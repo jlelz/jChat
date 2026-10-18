@@ -499,37 +499,38 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] and not Addon.DB:GetPersistence().Channels[ Info.arg ].Color ) then
                                     Addon.DB:GetPersistence().Channels[ Info.arg ].Color = Addon.CHAT:GetBaseColor();
                                 end
-                                if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil and Addon.DB:GetPersistence().Channels[ Info.arg ].Color ~= nil ) then
-                                    return unpack( Addon.DB:GetPersistence().Channels[ Info.arg ].Color );
-                                end
+                                return unpack( Addon.DB:GetPersistence().Channels[ Info.arg ].Color );
                             end,
                             set = function( Info,R,G,B,A )
                                 local InternalCall = true;
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
+
+                                    -- Start debug
                                     if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                         Addon.FRAMES:Debug( 'Addon.CONFIG:GetSettings()','Calling set() for',Info.arg,'Chat Color' );
                                     end
-                                    Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
-                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                        Addon.FRAMES:Debug( 'Set',Info.arg,'Chat Color to',R,G,B,A );
-                                    end
 
+                                    -- Popuplate color
+                                    Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
+
+                                    -- Determine channel
+                                    local Channel = Addon.CHAT:GetChannelId( Info.arg );
                                     local Community,ClubId,StreamId = unpack( Addon:Explode( Info.arg,':' ) );
                                     if( Addon:Minify( Community ) == 'community' ) then
-                                        local Channel = Chat_GetCommunitiesChannel( ClubId,StreamId );
-                                    elseif( Channel ) then
-                                        ChangeChatColor( Channel,R,G,B,A,InternalCall );
+                                        Channel = Chat_GetCommunitiesChannel( ClubId,StreamId );                                        
                                     end
-                                    local Channel = Addon.CHAT:GetChannelId( Info.arg );
                                     if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                         Addon.FRAMES:Debug( 'Channel',Channel );
                                     end
 
+                                    -- Change color
                                     if( Channel ) then
                                         ChangeChatColor( 'CHANNEL'..tostring( Channel ),R,G,B,A,InternalCall );
-                                        if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                            Addon.FRAMES:Debug( 'Called','ChangeChatColor with args','CHANNEL'..tostring( Channel ),R,G,B,A,tostring( InternalCall ) );
-                                        end
+                                    end
+
+                                    -- End debug
+                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                        Addon.FRAMES:Debug( 'Called','ChangeChatColor with args','CHANNEL'..tostring( Channel ),R,G,B,A,tostring( InternalCall ) );
                                     end
                                 end
                             end,
