@@ -244,6 +244,25 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
         end
 
+        Addon.CHAT.RefreshDBChannels = function( self )
+            local FrameChannels,DBChannels = self:GetChannels(),self:GetChannels();
+
+            for Id,ChannelData in pairs( FrameChannels ) do
+                for _,Channel in pairs( DBChannels ) do
+                    if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
+                        Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = {
+                            Allowed = ChannelData.Allowed,
+                            Id = ChannelData.Id,
+                            Color = self:GetBaseColor(),
+                            Name = ChannelData.Name,
+                            LongName = ChannelData.LongName,
+                            Disabled = ChannelData.Disabled,
+                        };
+                    end
+                end 
+            end
+        end
+
         Addon.CHAT.UpdateChatColors = function( self )
             -- Initialize channels when not defined
             for Id,ChannelData in pairs( self:GetChannels() ) do
@@ -342,6 +361,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end );
                 end
             end
+
+            self:RefreshDBChannels();
         end
 
         Addon.CHAT.RegisterCallbacks = function( self )
@@ -350,12 +371,15 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
                     Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
                     for Id,ChannelData in pairs( self:GetChannels() ) do
-                        if( ChannelData.Name == ChannelName ) then
-                            Addon.DB:GetPersistence().Channels[ ChannelName ].Id = ChannelData.Id;
+                        if( Addon:Minify( ChannelData.Name ):find( Addon:Minify( ChannelName ) ) ) then
+                            Addon.DB:GetPersistence().Channels[ ChannelName ] = ChannelData;
+                            Addon.DB:GetPersistence().Channels[ ChannelName ].Color = self:GetBaseColor();
+
+                            if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                Addon:Dump( Addon.DB:GetPersistence().Channels[ ChannelName ] );
+                            end
                         end
                     end
-                    Addon.DB:GetPersistence().Channels[ ChannelName ].Color = self:GetBaseColor();
-                    Addon.DB:GetPersistence().Channels[ ChannelName ].Allowed = true;
                 end
             end );
             -- Leave Channel
