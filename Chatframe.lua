@@ -329,10 +329,10 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
 
-            -- Fading
             for i = 1, 10 do
                 local Frame = _G[ 'ChatFrame'..i ];
                 if( Frame ) then
+                    -- Fading
                     local MyValue = Addon.CONFIG:GetValue( 'FadeOut' );
                     hooksecurefunc( Frame,'SetFading',function( self,YourValue )
 
@@ -342,32 +342,16 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                             end );
                         end
                     end );
-                    Frame:SetFading( MyValue );
-                end
-            end
 
-            -- Scrolling
-            for i = 1, 10 do
-                local Frame = _G[ 'ChatFrame'..i ];
-                if( Frame ) then
+                    -- Scrolling
                     local MyValue = Addon.CONFIG:GetValue( 'ScrollBack' );
-                    hooksecurefunc( Frame,'SetFading',function( self,YourValue )
-
-                        if( not YourValue == MyValue ) then
-                            C_Timer.After(0, function()
-                                if( MyValue ) then
-                                    Frame:SetMaxLines( 10000 );
-                                else
-                                    Frame:SetMaxLines( 128 );
-                                end
-                            end );
+                    C_Timer.After(0, function()
+                        if( MyValue ) then
+                            Frame:SetMaxLines( 10000 );
+                        else
+                            Frame:SetMaxLines( 128 );
                         end
                     end );
-                    if( MyValue ) then
-                        Frame:SetMaxLines( 10000 );
-                    else
-                        Frame:SetMaxLines( 128 );
-                    end
                 end
             end
         end
