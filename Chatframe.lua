@@ -296,57 +296,45 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
             ]]
 
-            -- Hook All Messages
+            -- Hooks
             self.Hooks = {};
 
             for i = 1, 10 do
                 local Frame = _G[ 'ChatFrame'..i ];
                 if( Frame ) then
+                    -- Messages
                     self.Hooks[ Frame ] = Frame.AddMessage;
                     Frame.AddMessage = Addon.APP.AddMessage;
                 end
             end
 
-            -- Font
+            -- Fonts, Fading, Scrolling
             for i = 1, 10 do
                 local Frame = _G[ 'ChatFrame'..i ];
                 if( Frame ) then
-                    hooksecurefunc( Frame,'SetFont',function( self,FontPath,FontSize )
-                        local Font = Addon.CONFIG:GetValue( 'Font' );
-
-                        if( not FontPath:find( Font.Family ) ) then
-                            C_Timer.After(0, function()
-                                if( Addon.DB.FONTS[ Font.Family ] ) then
-                                    Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                                else
-                                    Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
-                                end
-                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-                            end );
+                    -- Font
+                    local Font = Addon.CONFIG:GetValue( 'Font' );
+                    C_Timer.After(0, function()
+                        if( Addon.DB.FONTS[ Font.Family ] ) then
+                            Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+                            --Frame:SetSpacing(2);
+                        else
+                            Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                         end
+                        Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                        Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
                     end );
-                end
-            end
 
-            for i = 1, 10 do
-                local Frame = _G[ 'ChatFrame'..i ];
-                if( Frame ) then
                     -- Fading
-                    local MyValue = Addon.CONFIG:GetValue( 'FadeOut' );
-                    hooksecurefunc( Frame,'SetFading',function( self,YourValue )
-
-                        if( not YourValue == MyValue ) then
-                            C_Timer.After(0, function()
-                                Frame:SetFading( MyValue );
-                            end );
-                        end
+                    local Fading = Addon.CONFIG:GetValue( 'FadeOut' );
+                    C_Timer.After(0, function()
+                        Frame:SetFading( Fading );
                     end );
 
                     -- Scrolling
-                    local MyValue = Addon.CONFIG:GetValue( 'ScrollBack' );
+                    local Scrolling = Addon.CONFIG:GetValue( 'ScrollBack' );
                     C_Timer.After(0, function()
-                        if( MyValue ) then
+                        if( Scrolling ) then
                             Frame:SetMaxLines( 10000 );
                         else
                             Frame:SetMaxLines( 128 );
@@ -392,6 +380,20 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                         end
                     end
                 end
+            end );
+            -- Font size
+            hooksecurefunc( 'FCF_SetChatWindowFontSize',function( self,Frame,FontSize )
+                local Font = Addon.CONFIG:GetValue( 'Font' );
+                C_Timer.After(0, function()
+                    if( Addon.DB.FONTS[ Font.Family ] ) then
+                        Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+                        --Frame:SetSpacing(2);
+                    else
+                        Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                    end
+                    Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+                    Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+                end );
             end );
             -- New Tab
             hooksecurefunc( 'FCF_CopyChatSettings',function( NewFrame,ExistingFrame )
