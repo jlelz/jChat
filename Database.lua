@@ -159,6 +159,10 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 return;
             end
 
+            self.FONTS = {
+                Enigmatic = "Interface\\AddOns\\" .. AddonName .. "\\Fonts\\Enigma__2.TTF",
+            };
+
             self.db.RegisterCallback( self,'OnProfileReset','Reset' );
         end
         

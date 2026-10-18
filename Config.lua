@@ -704,6 +704,18 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     arg = 'LinksEnabled',
                 };
 
+                local LSM = LibStub( 'LibSharedMedia-3.0',true );
+                if( LSM ) then
+                    LSM:Register( 'font','Enigmatic', Addon.DB.FONTS.Enigmatic );
+                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                        Addon.FRAMES:Debug( 'App.CONFIG','Enigmatic loaded successfully' );
+                    end
+                else
+                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                        Addon.FRAMES:Debug( 'App.CONFIG','Enigmatic could not be loaded' );
+                    end
+                end
+
                 Order = Order+1;
                 Settings.FontSection = {
                     type = 'header',
@@ -725,7 +737,11 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
 
                                 local Font = Addon.CONFIG:GetValue( 'Font' );
-                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                                if( Addon.DB.FONTS[ Font.Family ] ) then
+                                    Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+                                else
+                                    Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                                end
 
                                 if( Frame.RefreshLayout ) then
                                     Frame:RefreshLayout();
@@ -735,6 +751,7 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                     end,
                     values = {
                         skurri = 'skurri',
+                        Enigmatic = 'Enigmatic',
                         ARIALN = 'ARIALN',
                         MORPHEUS = 'MORPHEUS',
                         FRIZQT__ = 'FRIZQT__',

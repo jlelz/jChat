@@ -363,7 +363,11 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                         if( not FontPath:find( Font.Family ) ) then
                             C_Timer.After(0, function()
-                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                                if( Addon.DB.FONTS[ Font.Family ] ) then
+                                    Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+                                else
+                                    Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                                end
                                 Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
                                 Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
                             end );
@@ -470,7 +474,11 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                 -- Font
                 local Font = Addon.CONFIG:GetValue( 'Font' );
-                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                if( Addon.DB.FONTS[ Font.Family ] ) then
+                    Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+                else
+                    Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
+                end
                 Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
                 Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
             end );
