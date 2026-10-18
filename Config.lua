@@ -542,6 +542,59 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
 
                 Order = Order+1;
+                Settings.CustomColor = {
+                    type = 'toggle',
+                    order = Order,
+                    name = 'Developer Custom Colors',
+                    arg = 'CustomColor',
+                    set = function( Info,Value )
+                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                            Addon.DB:GetPersistence()[ Info.arg ] = Value;
+                        end
+                        if( Value ) then
+                            -- Initialize channels when not defined
+                            for Id,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
+                                if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
+                                    Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = ChannelData;
+                                end
+                            end
+                            -- Update Channel Colors from DB
+                            local Colors = Addon.DB:GetPersistence().CustomColors;
+                            for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
+                                for ChannelName,ColorData in pairs( Colors ) do
+                                    if( Addon:Minify( Channel.Name ):find( Addon:Minify( ChannelName ) ) ) then
+                                        local Color = {
+                                            ColorData.r,
+                                            ColorData.g,
+                                            ColorData.b,
+                                            ColorData.a,
+                                        };
+                                        if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                            Addon.FRAMES:Debug( 'Updating color','CHANNEL'..tostring(Channel.Id),tostring(Channel.Name) );
+                                        end
+                                        ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Color ) );
+                                    end
+                                end
+                            end
+                        else
+                            -- Initialize channels when not defined
+                            for Id,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
+                                if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
+                                    Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = ChannelData;
+                                end
+                            end
+
+                            for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
+                                if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                                    Addon.FRAMES:Debug( 'Updating color','CHANNEL'..tostring(Channel.Id),tostring(Channel.Name) );
+                                end
+                                ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Addon.CHAT:GetBaseColor() ) );
+                            end
+                        end
+                    end,
+                }
+
+                Order = Order+1;
                 Settings.ChannelMessages = {
                     type = 'header',
                     order = Order,

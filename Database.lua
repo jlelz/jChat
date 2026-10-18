@@ -41,6 +41,39 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 },
                 ScrollBack = true,
                 QuestAlert = true,
+                CustomColor = false,
+                CustomColors = {
+                    lookingForGroup = {
+                        r = 116/255,
+                        g = 51/255,
+                        b = 168/255,
+                        a = 1,
+                    },
+                    federation = {
+                        r = 97/255,
+                        g = 122/255,
+                        b = 254/255,
+                        a = 1,
+                    },
+                    jlelz = {
+                        r = 238/255,
+                        g = 29/255,
+                        b = 254/255,
+                        a = 1,
+                    },
+                    erp = {
+                        r = 212/255,
+                        g = 85/255,
+                        b = 254/255,
+                        a = 1,
+                    },
+                    trade = {
+                        r = 151/255,
+                        g = 114/255,
+                        b = 114/255,
+                        a = 1,
+                    },
+                },
                 ChannelColor = {
                     254/255,
                     191/255,
