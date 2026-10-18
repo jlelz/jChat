@@ -44,9 +44,9 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 CustomColor = false,
                 CustomColors = {
                     lookingForGroup = {
-                        r = 116/255,
-                        g = 51/255,
-                        b = 168/255,
+                        r = 170/255,
+                        g = 0/255,
+                        b = 183/255,
                         a = 1,
                     },
                     federation = {
