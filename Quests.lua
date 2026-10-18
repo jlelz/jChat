@@ -25,10 +25,10 @@ Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
         Addon.QUESTS.CompleteQuest = function( self,... )
             if( self.ActiveQuests[ QuestTitle ] ) then
                 local QuestTitle;
-                if( Addon:IsClassic() ) then
-                    QuestTitle = Addon:Minify( C_QuestLog.GetQuestInfo( ... ) )
-                else
+                if( C_QuestLog and C_QuestLog.GetTitleForQuestID ) then
                     QuestTitle = Addon:Minify( C_QuestLog.GetTitleForQuestID( ... ) )
+                else
+                    QuestTitle = Addon:Minify( C_QuestLog.GetQuestInfo( ... ) )
                 end
                 self.ActiveQuests[ QuestTitle ] = nil;
             end
@@ -40,7 +40,13 @@ Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.QUESTS.RebuildQuests = function( self )
             self.ActiveQuests = {};
-            local NumEntries,NumQuests = C_QuestLog.GetNumQuestLogEntries();
+            local NumEntries,NumQuests;
+
+            if( C_QuestLog and C_QuestLog.GetNumQuestLogEntries ) then
+                NumEntries,NumQuests = C_QuestLog.GetNumQuestLogEntries();
+            else
+                NumEntries,NumQuests = GetNumQuestLogEntries();
+            end
             for i=1, NumEntries do
                 local QuestTitle = C_QuestLog.GetTitleForQuestID( i );
                 if( QuestTitle ) then
