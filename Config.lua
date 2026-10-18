@@ -284,7 +284,16 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         desc = 'Allow disabled channel messages which are alerting',
                         arg = 'BypassTypes',
                     },
-                }
+                };
+
+                Order = Order+1;
+                Settings.ShortChannelNames = {
+                    type = 'toggle',
+                    order = Order,
+                    name = 'Short Channel Names',
+                    desc = 'For channels with long names, shorten them with abbreviation',
+                    arg = 'ShortChannelNames',
+                };
 
                 --[[
                 Order = Order+1;
