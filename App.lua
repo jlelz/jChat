@@ -394,49 +394,5 @@ Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
         end
     end );
 
-    -- Joins
-    local DBChannels = Addon.DB:GetPersistence().Channels;
-    local FrameChannels = Addon.CHAT:GetChannels();
-
-    for i,Channel in pairs( FrameChannels ) do
-        Channel.Name = Addon.CHAT:GetClubName( Channel.Name ) or Channel.Name;
-
-        local ClubData = Addon:Explode( Channel.Name,':' );
-        if( ClubData and tonumber( #ClubData ) > 0 ) then
-            local ClubId = ClubData[2] or 0;
-            if( tonumber( ClubId ) > 0 ) then
-                local ClubInfo = C_Club.GetClubInfo( ClubId );
-                if( ClubInfo ) then
-                    Channel.Name = ClubInfo.name;
-                    Channel.Name = ChannelData.Name:gsub( '%s+','' );
-                end
-            end
-        end
-
-        local ChannelLink;
-        if( tonumber( Channel.Id ) > 0 ) then
-            ChannelLink = Addon.CHAT:GetChannelLink( Channel.Id,Channel.Name );
-        end
-
-        local HighLightColor = {};
-        if( tonumber( Channel.Id ) > 0 ) then
-            if( DBChannels[ Channel.Name ] and DBChannels[ Channel.Name ].Color ) then
-                HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ Channel.Name ].Color );
-            else
-                local ChatInfo = ChatTypeInfo[ 'CHANNEL_JOIN' ];
-                HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( ChatInfo );
-            end
-        end
-
-        local JoinedText = CreateColor( HighLightColor.r or 1, 
-            HighLightColor.g or 1, 
-            HighLightColor.b or 1, 
-            HighLightColor.a or 1 ):WrapTextInColorCode( 'You have joined '..ChannelLink );
-
-        if( Frame ) then
-            Frame:AddMessage( JoinedText );
-        end
-    end
-
     Addon.FRAMES:Notify( 'Done' );
 end );
