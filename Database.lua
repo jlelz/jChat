@@ -17,10 +17,10 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                     Flags = 'THINOUTLINE',
                     Shadow = {
                         Color = {
-                            r = 0/255,
-                            g = 0/255,
-                            b = 0/255,
-                            a = 0,
+                            r = 101/255,
+                            g = 68/255,
+                            b = 96/255,
+                            a = 1,
                         },
                         Offset = {
                             x = 2,
