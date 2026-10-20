@@ -127,23 +127,16 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             local ChannelList = {};
             local Channels = { GetChannelList() };
             for i = 1,#Channels,3 do
-                local Club;
-                local ClubData = Addon:Explode( Channels[i+1],':' );
-                if( ClubData and tonumber( #ClubData ) > 0 ) then
-                    local ClubId = ClubData[2] or 0;
-                    if( tonumber( ClubId ) > 0 ) then
-                        Club = C_Club.GetClubInfo( ClubId );
-                    end
-                end
                 local LongName = Channels[i+1];
-                if( Club ) then
-                    LongName = Club.name;
-                    LongName = LongName:gsub( '%s+','' );
+
+                local ClubName = self:GetClubName( LongName );
+                if( ClubName ) then
+                    LongName = ClubName;
                 end
 
                 ChannelList[ i ] = {
                     Id = Channels[i],
-                    Name = Channels[i+1],
+                    Name = LongName,
                     LongName = LongName,
                     Disabled = Channels[i+2],
                     Color = self:GetBaseColor(),
@@ -263,17 +256,10 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             end
         end
 
-        Addon.CHAT.UpdateChatColors = function( self )
-            -- Initialize channels when not defined
-            for Id,ChannelData in pairs( self:GetChannels() ) do
-                if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
-                    Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = ChannelData;
-                end
-            end
-            -- Update Channel Colors from DB
+        Addon.CHAT.ApplyChatColors = function( self )
             for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
                 if( Channel.Id ) then
-                    ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Channel.Color ) );
+                    ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Channel.Color ),true );
                 end
             end
         end
@@ -295,25 +281,8 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         --  @return void
         Addon.CHAT.Init = function( self )
 
-            --[[
-            -- Subscribed Clubs
-            if( C_Club ) then
-                local SubscribedClubs = C_Club:GetSubscribedClubs();
-                for _,Club in pairs( SubscribedClubs ) do
-                    if( Club and Club.shortName ) then
-                        local ChannelName = Club.shortName:gsub( '%s+','' );
-                        if( ChannelName ) then
-                            if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                                Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
-                                Addon.DB:GetPersistence().Channels[ ChannelName ].Id = Club.clubid;
-                                Addon.DB:GetPersistence().Channels[ ChannelName ].Color = Addon.CHAT:GetBaseColor();
-                                Addon.DB:GetPersistence().Channels[ ChannelName ].Allowed = true;
-                            end
-                        end
-                    end
-                end
-            end
-            ]]
+            -- Iterate channels
+            self:GetChannels();
 
             -- Hooks
             self.Hooks = {};
@@ -336,7 +305,6 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     C_Timer.After(0, function()
                         if( Addon.DB.FONTS[ Font.Family ] ) then
                             Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                            --Frame:SetSpacing(2);
                         else
                             Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                         end
@@ -362,23 +330,65 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                 end
             end
 
+            -- DB all joins
             self:RefreshDBChannels();
+
+            -- Respect ClassColors pref
+            if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id;
+                if( ChannelId ) then
+                    ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ),true );
+                end
+            end
+
+            self:RegisterCallbacks();
         end
 
         Addon.CHAT.RegisterCallbacks = function( self )
+            hooksecurefunc( 'SetItemRef',function( Pattern,FullText )
+                local linkType,addon,param1 = strsplit( ':',Pattern );
+                if( linkType == 'addon' and addon == 'jChat' ) then
+                    if( param1 == 'url' ) then
+                        local Frame = _G[ 'ChatFrame'..1 ];
+                        if( Frame ) then
+                            Frame.editBox:SetText( FullText:match( ">(.-)<" ) );
+
+                            ChatEdit_ActivateChat( Frame.editBox );
+                            
+                            Frame.editBox:HighlightText();
+                        end
+                    end
+                end
+            end );
             -- Join Channel
             hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
+
+                -- Add DB entry
                 if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
                     Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
                     for Id,ChannelData in pairs( self:GetChannels() ) do
                         if( Addon:Minify( ChannelData.Name ):find( Addon:Minify( ChannelName ) ) ) then
-                            Addon.DB:GetPersistence().Channels[ ChannelName ] = ChannelData;
-                            Addon.DB:GetPersistence().Channels[ ChannelName ].Color = self:GetBaseColor();
+                            Addon.DB:GetPersistence().Channels[ ChannelName ] = {
+                                Allowed = ChannelData.Allowed,
+                                Id = ChannelData.Id,
+                                Color = self:GetBaseColor(),
+                                Name = ChannelData.Name,
+                                LongName = ChannelData.LongName,
+                                Disabled = ChannelData.Disabled,
+                            };
 
                             if( Addon.CONFIG:GetValue( 'Debug' ) ) then
                                 Addon:Dump( Addon.DB:GetPersistence().Channels[ ChannelName ] );
                             end
                         end
+                    end
+                end
+
+                -- Respect ClassColors pref
+                if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                    local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id;
+                    if( ChannelId ) then
+                        ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
                     end
                 end
             end );
@@ -448,7 +458,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- Reset chat
             hooksecurefunc( 'FCF_ResetAllWindows',function()
                 -- Colors
-                Addon.CHAT:UpdateChatColors();
+                Addon.CHAT:ApplyChatColors();
 
                 -- Font
                 for i = 1, 10 do
@@ -494,6 +504,25 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 Frame:SetMaxLines( 128 );
                             end
                         end );
+                    end
+                end
+            end );
+            hooksecurefunc( 'ChangeChatColor',function( ChannelName,R,G,B,Internal )
+                if( not Internal ) then
+                    if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
+                        Addon.DB:GetPersistence().Channels[ ChannelName ].Color = R,G,B;
+                    end
+                end
+            end );
+            hooksecurefunc( 'ToggleChatColorNamesByClassGroup',function( Checked,Group,Internal )
+                if( not Internal ) then
+                    -- We don't care
+                end
+            end );
+            hooksecurefunc( 'ToggleChatMessageGroup',function( Checked,Group )
+                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatFrame,Group ) ~= nil ) then
+                    if( Addon.DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
+                        Addon.DB:GetPersistence().ChatGroups[ Group ] = Checked;
                     end
                 end
             end );

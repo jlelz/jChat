@@ -193,9 +193,13 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                 return;
             end
 
+            -- @todo: add all fonts here
             self.FONTS = {
                 Enigmatic = "Interface\\AddOns\\" .. AddonName .. "\\Fonts\\Enigma__2.TTF",
             };
+
+            -- @todo: check if any db entries should be temp vars
+            -- add them here if so instead
 
             self.db.RegisterCallback( self,'OnProfileReset','Reset' );
         end

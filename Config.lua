@@ -445,17 +445,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 };
                 for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
                     if( ChannelData.Name ) then
-                        -- club
-                        local ClubData = Addon:Explode( ChannelData.Name,':' );
-                        if( ClubData and tonumber( #ClubData ) > 0 ) then
-                            local ClubId = ClubData[2] or 0;
-                            if( tonumber( ClubId ) > 0 ) then
-                                local ClubInfo = C_Club.GetClubInfo( ClubId );
-                                if( ClubInfo ) then
-                                    ChannelData.Name = ClubInfo.name;
-                                    ChannelData.Name = ChannelData.Name:gsub( '%s+','' );
-                                end
-                            end
+                        local ClubName = Addon.CHAT:GetClubName( ChannelData.Name );
+                        if( ClubName ) then
+                            ChannelData.Name = ClubName;
                         end
                         
                         Order = Order+1;
@@ -486,17 +478,9 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
 
                 for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
                     if( ChannelData.Name ) then
-
-                        -- club
-                        local ClubData = Addon:Explode( ChannelData.Name,':' );
-                        if( ClubData and tonumber( #ClubData ) > 0 ) then
-                            local ClubId = ClubData[2] or 0;
-                            if( tonumber( ClubId ) > 0 ) then
-                                local ClubName = Addon.CHAT:GetClubNameForId( ClubId );
-                                if( ClubName ) then
-                                    ChannelData.Name = ClubName:gsub( '%s+','' );
-                                end
-                            end
+                        local ClubName = Addon.CHAT:GetClubName( ChannelData.Name );
+                        if( ClubName ) then
+                            ChannelData.Name = ClubName;
                         end
 
                         Order = Order+1;
@@ -1196,36 +1180,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
             return Addon.DB:GetPersistence().AliasList;
         end
 
-        Addon.CONFIG.RegisterCallbacks = function( self )
-            hooksecurefunc( 'ToggleChatMessageGroup',function( Checked,Group )
-                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatFrame,Group ) ~= nil ) then
-                    if( Addon.DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
-                        Addon.DB:GetPersistence().ChatGroups[ Group ] = Checked;
-                    end
-                end
-            end );
-            hooksecurefunc( 'ToggleChatColorNamesByClassGroup',function( Checked,Group )
-                if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'App.CONFIG','ToggleChatColorNamesByClassGroup',tostring( Checked ),Group );
-                end
-            end );
-            hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
-                local Channel = Addon.DB:GetPersistence().Channels[ ChannelName ];
-                if( Channel ) then
-                    local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id or Addon.CHAT:GetChannelId( ChannelName );
-                    if( ChannelId ) then
-                        ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
-                    end
-                end
-            end );
-            hooksecurefunc( 'ChangeChatColor',function( ChannelName,R,G,B,Internal )
-                if( not Internal ) then
-                    if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                        Addon.DB:GetPersistence().Channels[ ChannelName ].Color = R,G,B;
-                    end
-                end
-            end );
-        end
         self:UnregisterEvent( 'ADDON_LOADED' );
     end
 end );

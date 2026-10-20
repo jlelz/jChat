@@ -3,7 +3,6 @@ local strsub = string.sub;
 local issecretvalue = issecretvalue or function()end;
 
 local C_ChatInfo = C_ChatInfo;
-local C_Club = C_Club;
 local C_PartyInfo = C_PartyInfo;
 local TimeUtil = TimeUtil;
 
@@ -366,33 +365,20 @@ end
 Addon.APP:RegisterEvent( 'ADDON_LOADED' );
 Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
     if( AddonName ~= 'jChat' ) then return end;
-
-    Addon.FRAMES:Notify( 'Prepping..please wait' );
-
-    -- Initialize
-    local Frame = _G[ 'ChatFrame'..1 ];
+    
     Addon.DB:Init();
+
     Addon.QUESTS:Init();
+
+    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+        Addon.FRAMES:Notify( 'Prepping. Please wait...' );
+    end
+
     Addon.CHAT:Init();
+
     Addon.CONFIG:Init();
 
-    -- Callbacks
-    Addon.CONFIG:RegisterCallbacks();
-    Addon.CHAT:RegisterCallbacks();
-    hooksecurefunc( 'SetItemRef',function( Pattern,FullText )
-        local linkType,addon,param1 = strsplit( ':',Pattern );
-        if( linkType == 'addon' and addon == 'jChat' ) then
-            if( param1 == 'url' ) then
-                if( Frame ) then
-                    Frame.editBox:SetText( FullText:match( ">(.-)<" ) );
-
-                    ChatEdit_ActivateChat( Frame.editBox );
-                    
-                    Frame.editBox:HighlightText();
-                end
-            end
-        end
-    end );
-
-    Addon.FRAMES:Notify( 'Done' );
+    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+        Addon.FRAMES:Notify( 'Done' );
+    end
 end );
