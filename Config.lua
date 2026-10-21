@@ -497,33 +497,12 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 local InternalCall = true;
                                 if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
 
-                                    -- Start debug
-                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                        Addon.FRAMES:Debug( 'Addon.CONFIG:GetSettings()','Calling set() for',Info.arg,'Chat Color' );
-                                    end
-
-                                    -- Popuplate color
+                                    -- Change color
                                     Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
 
-                                    -- Determine channel
-                                    local Channel = Addon.CHAT:GetChannelId( Info.arg );
-                                    local Community,ClubId,StreamId = unpack( Addon:Explode( Info.arg,':' ) );
-                                    if( Addon:Minify( Community ) == 'community' ) then
-                                        Channel = Chat_GetCommunitiesChannel( ClubId,StreamId );                                        
-                                    end
-                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                        Addon.FRAMES:Debug( 'Channel',Channel );
-                                    end
-
-                                    -- Change color
-                                    if( Channel ) then
-                                        ChangeChatColor( 'CHANNEL'..tostring( Channel ),R,G,B,A,InternalCall );
-                                    end
-
-                                    -- End debug
-                                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                        Addon.FRAMES:Debug( 'Called','ChangeChatColor with args','CHANNEL'..tostring( Channel ),R,G,B,A,tostring( InternalCall ) );
-                                    end
+                                    -- Refresh config
+                                    Addon.CHAT:ApplyChatColors();
+                                    
                                 end
                             end,
                             name = '[['..ChannelData.Id..']'..ChannelData.Name..']',
@@ -533,62 +512,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                         };
                     end
                 end
-
-                Order = Order+1;
-                Settings.CustomColor = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Developer Custom Colors',
-                    arg = 'CustomColor',
-                    set = function( Info,Value )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = Value;
-                        end
-                        if( Value ) then
-                            -- Initialize channels when not defined
-                            for Id,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
-                                if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
-                                    Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = ChannelData;
-                                end
-                            end
-                            -- Update Channel Colors from DB
-                            local Colors = Addon.DB:GetPersistence().CustomColors;
-                            for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
-                                for ChannelName,ColorData in pairs( Colors ) do
-                                    if( Addon:Minify( Channel.Name ):find( Addon:Minify( ChannelName ) ) ) then
-                                        local Color = {
-                                            ColorData.r,
-                                            ColorData.g,
-                                            ColorData.b,
-                                            ColorData.a,
-                                        };
-                                        if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                            Addon.FRAMES:Debug( 'Updating color','CHANNEL'..tostring(Channel.Id),tostring(Channel.Name) );
-                                        end
-                                        if( Addon.DB:GetPersistence().Channels[ Channel.Name ] and Addon.DB:GetPersistence().Channels[ Channel.Name ].Color ) then
-                                            Addon.DB:GetPersistence().Channels[ Channel.Name ].Color = Color;
-                                        end
-                                        ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Color ) );
-                                    end
-                                end
-                            end
-                        else
-                            -- Initialize channels when not defined
-                            for Id,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
-                                if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
-                                    Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = ChannelData;
-                                end
-                            end
-
-                            for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
-                                if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                    Addon.FRAMES:Debug( 'Updating color','CHANNEL'..tostring(Channel.Id),tostring(Channel.Name) );
-                                end
-                                ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Addon.CHAT:GetBaseColor() ) );
-                            end
-                        end
-                    end,
-                }
 
                 Order = Order+1;
                 Settings.ChannelMessages = {

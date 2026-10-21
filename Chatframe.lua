@@ -257,12 +257,20 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
         end
 
         Addon.CHAT.ApplyChatColors = function( self )
-            for _,Channel in pairs( Addon.DB:GetPersistence().Channels ) do
-                if( Channel.Id ) then
-                    ChangeChatColor( 'CHANNEL'..Channel.Id,unpack( Channel.Color ),true );
+            local FrameChannels,DBChannels = self:GetChannels(),Addon.DB:GetPersistence().Channels;
+
+            for Id,ChannelData in pairs( FrameChannels ) do
+                for _,Channel in pairs( DBChannels ) do
+                    if( DBChannels[ ChannelData.Name ] and DBChannels[ ChannelData.Name ].Id ) then
+                        if( DBChannels[ ChannelData.Name ].Color ) then
+                            local R,G,B,A = unpack( DBChannels[ ChannelData.Name ].Color );
+                            ChangeChatColor( 'CHANNEL'..DBChannels[ ChannelData.Name ].Id,R,G,B,true );
+                        end
+                    end
                 end
             end
         end
+        
         --
         -- Set chat group
         --
@@ -340,6 +348,9 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ),true );
                 end
             end
+
+            -- Refresh Chat Colors
+            self:ApplyChatColors();
 
             self:RegisterCallbacks();
         end
