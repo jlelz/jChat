@@ -264,7 +264,7 @@ Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
                     if( DBChannels[ ChannelData.Name ] and DBChannels[ ChannelData.Name ].Id ) then
                         if( DBChannels[ ChannelData.Name ].Color ) then
                             local R,G,B,A = unpack( DBChannels[ ChannelData.Name ].Color );
-                            ChangeChatColor( 'CHANNEL'..DBChannels[ ChannelData.Name ].Id,R,G,B,true );
+                            ChangeChatColor( 'CHANNEL'..ChannelData.Id,R,G,B,true );
                         end
                     end
                 end
