@@ -23,8 +23,8 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
                             a = 1,
                         },
                         Offset = {
-                            x = 2,
-                            y = -2,
+                            x = 1,
+                            y = -1,
                         },
                     },
                 },
