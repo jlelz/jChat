@@ -679,13 +679,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                 local LSM = LibStub( 'LibSharedMedia-3.0',true );
                 if( LSM ) then
                     LSM:Register( 'font','Enigmatic', Addon.DB.FONTS.Enigmatic );
-                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                        Addon.FRAMES:Debug( 'App.CONFIG','Enigmatic loaded successfully' );
-                    end
-                else
-                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                        Addon.FRAMES:Debug( 'App.CONFIG','Enigmatic could not be loaded' );
-                    end
                 end
 
                 Order = Order+1;
@@ -711,8 +704,6 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
                                 local Font = Addon.CONFIG:GetValue( 'Font' );
                                 if( Addon.DB.FONTS[ Font.Family ] ) then
                                     Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                                else
-                                    Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
                                 end
 
                                 if( Frame.RefreshLayout ) then

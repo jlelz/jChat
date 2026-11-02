@@ -163,6 +163,10 @@ Addon.DB:SetScript( 'OnEvent',function( self,Event,AddonName )
             -- @todo: add all fonts here
             self.FONTS = {
                 Enigmatic = "Interface\\AddOns\\" .. AddonName .. "\\Fonts\\Enigma__2.TTF",
+                ARIALN = "Fonts\\ARIALN.TTF",
+                FRIZQT__ = "Fonts\\FRIZQT__.TTF",
+                MORPHEUS = "Fonts\\MORPHEUS.TTF",
+                skurri = "Fonts\\skurri.TTF",
             };
 
             -- @todo: check if any db entries should be temp vars
