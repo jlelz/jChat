@@ -875,22 +875,37 @@ Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
         --
         --  @return void
         Addon.CONFIG.Init = function( self )
-            -- Initialize window
-            local _, CategoryID = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( AddonName,AddonName );
-            LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( AddonName,self:GetSettings() );
 
-            SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
-            SlashCmdList[ string.upper( AddonName ) ] = function( Msg,EditBox )
-                if( InCombatLockdown() ) then
-                    Addon.FRAMES:Error( 'You are in combat' );return;
-                end
-                if( InterfaceOptionsFrame_OpenToCategory ) then
-                    InterfaceOptionsFrame_OpenToCategory( AddonName );
-                    InterfaceOptionsFrame_OpenToCategory( AddonName );
-                else
-                    Settings.OpenToCategory( CategoryID );
-                end
-            end
+            local Event = CreateFrame( 'Frame' );
+            Event:RegisterEvent( 'PLAYER_ENTERING_WORLD' );
+            Event:SetScript( 'OnEvent',function( self,Event,...)
+                local Initialized = false;
+                hooksecurefunc( 'ChatConfig_UpdateChatSettings',function( self )
+                    if( Initialized ) then return; end
+                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                        Addon.FRAMES:Notify( 'ChatConfig_UpdateChatSettings','Began...' );
+                    end
+                    local _, CategoryID = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( AddonName,AddonName );
+                    LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( AddonName,Addon.CONFIG:GetSettings() );
+
+                    SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
+                    SlashCmdList[ string.upper( AddonName ) ] = function( Msg,EditBox )
+                        if( InCombatLockdown() ) then
+                            Addon.FRAMES:Error( 'You are in combat' );return;
+                        end
+                        if( InterfaceOptionsFrame_OpenToCategory ) then
+                            InterfaceOptionsFrame_OpenToCategory( AddonName );
+                            InterfaceOptionsFrame_OpenToCategory( AddonName );
+                        else
+                            Settings.OpenToCategory( CategoryID );
+                        end
+                    end
+                    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
+                        Addon.FRAMES:Notify( 'ChatConfig_UpdateChatSettings','Ended...' );
+                    end
+                    Initialized = true;
+                end );
+            end );
         end
 
         Addon.CONFIG.GetMessageGroups = function( self )
