@@ -489,6 +489,23 @@ function CONFIG:QuestOps()
 	}
 end
 
+function CONFIG:DebugOps()
+	return {
+        FirstSeparator = {
+            type = 'header',
+            order = 0,
+            name = 'DEBUG',
+        },
+		Debug = {
+	        type = 'toggle',
+	        order = 1,
+	        name = 'Enabled',
+	        desc = 'Enable/disable debug',
+	        arg = 'Debug',
+		}
+	}
+end
+
 function CONFIG:OpenConfig( Input )
     LibStub( 'AceConfigDialog-3.0' ):Open( NAME )
 end
@@ -511,31 +528,38 @@ function CONFIG:Refresh()
 		args = {
 			WindowOptions = {
 				order = 1,
-				name = 'Window Options',
+				name = 'Windows',
 				type = 'group',
 				width = 'full',
 				args = self:WindowOps()
 			},
 			FormattingOptions = {
 				order = 2,
-				name = 'Format Options',
+				name = 'Formats',
 				type = 'group',
 				width = 'full',
 				args = self:FormatOps()
 			},
 			FilterOptions = {
 				order = 3,
-				name = 'Filter Options',
+				name = 'Filters',
 				type = 'group',
 				width = 'full',
 				args = self:FilterOps()
 			},
 			QuestOptions = {
 				order = 4,
-				name = 'Quest Options',
+				name = 'Quests',
 				type = 'group',
 				width = 'full',
 				args = self:QuestOps()
+			},
+			DebugOptions = {
+				order = 5,
+				name = 'Debug',
+				type = 'group',
+				width = 'full',
+				args = self:DebugOps()
 			},
 		},
 	};
