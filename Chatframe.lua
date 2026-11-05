@@ -2,7 +2,7 @@ local _,Library = ...;
 
 local ADDON = LibStub( 'AceAddon-3.0' ):GetAddon( 'jChat' )
 local DB = ADDON:GetModule( 'database' )
-local CHATFRAME = ADDON:NewModule( 'chatframe','AceHook-3.0' )
+local CHATFRAME = ADDON:NewModule( 'chatframe','AceHook-3.0','AceEvent-3.0' )
 
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME;
 local ChatFrame = DEFAULT_CHAT_FRAME;
@@ -226,17 +226,21 @@ function CHATFRAME:RegisterCallbacks()
             end
         end
     end )
-    self:SecureHook( 'LeaveChannelByName',function( ChannelName )
-        -- Reemove DB entry
-        if( ChannelName ) then
+    self:RegisterEvent( 'CHAT_MSG_CHANNEL_NOTICE',function( Event,... )
+        local NoticeType,_,_,_,_,_,_,_,ChannelName = ...
+
+        if( NoticeType == 'YOU_LEFT' and ChannelName ) then
             if( DB:GetPersistence().Channels[ ChannelName ] ) then
                 DB:GetPersistence().Channels[ ChannelName ] = nil;
+                if( DB:GetDBValue( 'Debug' ) ) then
+                    Library.FRAMES:Debug( 'Purged',ChannelName )
+                end
             end
         end
     end )
+
     self:SecureHook( 'SetItemRef',function( Pattern,FullText )
         local linkType,addon,param1 = strsplit( ':',Pattern );
-        print( addon )
         if( linkType == 'addon' and addon == 'jChat' ) then
             if( param1 == 'url' ) then
                 local Frame = _G[ 'ChatFrame'..1 ];
