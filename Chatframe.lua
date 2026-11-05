@@ -175,21 +175,34 @@ function CHATFRAME:ApplyChatColors()
 end
 
 function CHATFRAME:RefreshChannels()
-    local FrameChannels,DBChannels = self:GetChannels(),self:GetChannels()
+    local FrameChannels,DBChannels = self:GetChannels(),DB:GetPersistence().Channels
 
+    local FrameChannelNames = {}
     for Id,ChannelData in pairs( FrameChannels ) do
-        for _,Channel in pairs( DBChannels ) do
-            if( not DB:GetPersistence().Channels[ ChannelData.Name ] ) then
-                DB:GetPersistence().Channels[ ChannelData.Name ] = {
-                    Allowed = ChannelData.Allowed,
-                    Id = ChannelData.Id,
-                    Color = ChannelData.Cololr,
-                    Name = ChannelData.Name,
-                    LongName = ChannelData.LongName,
-                    Disabled = ChannelData.Disabled,
-                }
+        if( not DBChannels[ ChannelData.Name ] ) then
+            DBChannels[ ChannelData.Name ] = {
+                Allowed = ChannelData.Allowed,
+                Id = ChannelData.Id,
+                Color = ChannelData.Cololr,
+                Name = ChannelData.Name,
+                LongName = ChannelData.LongName,
+                Disabled = ChannelData.Disabled,
+            }
+            if( DB:GetDBValue( 'Debug' ) ) then
+                Library.FRAMES:Debug( 'Adding to DB',ChannelData.Name )
             end
-        end 
+
+        end
+        FrameChannelNames[ ChannelData.Name ] = ChannelData.Name
+    end
+
+    for _,ChannelData in pairs( DBChannels ) do
+        if( not Library:InArray( ChannelData.Name,FrameChannelNames ) ) then
+            DBChannels[ ChannelData.Name ] = nil
+            if( DB:GetDBValue( 'Debug' ) ) then
+                Library.FRAMES:Debug( 'Purged from DB',ChannelData.Name )
+            end
+        end
     end
 end
 
@@ -233,7 +246,7 @@ function CHATFRAME:RegisterCallbacks()
             if( DB:GetPersistence().Channels[ ChannelName ] ) then
                 DB:GetPersistence().Channels[ ChannelName ] = nil;
                 if( DB:GetDBValue( 'Debug' ) ) then
-                    Library.FRAMES:Debug( 'Purged',ChannelName )
+                    Library.FRAMES:Debug( 'Purged from DB',ChannelName )
                 end
             end
         end
