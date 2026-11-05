@@ -1,535 +1,441 @@
-local _, Addon = ...;
+local _,Library = ...;
+
+local ADDON = LibStub( 'AceAddon-3.0' ):GetAddon( 'jChat' )
+local DB = ADDON:GetModule( 'database' )
+local CHATFRAME = ADDON:NewModule( 'chatframe','AceHook-3.0' )
+
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME;
-local JoinPermanentChannel = JoinPermanentChannel;
-local LeaveChannelByName = LeaveChannelByName;
-local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS;
-local GetChannelList = GetChannelList;
-local CreateColor = CreateColor;
-local ChangeChatColor = ChangeChatColor;
-local C_Club = C_Club;
-local CURRENT_CHAT_FRAME_ID = CURRENT_CHAT_FRAME_ID;
-local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK;
-local FCF_GetCurrentChatFrame = FCF_GetCurrentChatFrame;
 local ChatFrame = DEFAULT_CHAT_FRAME;
 
-Addon.CHAT = CreateFrame( 'Frame' );
-Addon.CHAT:RegisterEvent( 'ADDON_LOADED' );
-Addon.CHAT:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChat' ) then
+local GetChannelList = GetChannelList
+local ChangeChatColor = ChangeChatColor
+local C_Club = C_Club
 
-        --
-        --  Get default channel colors
-        --
-        --  @return table
-        Addon.CHAT.GetBaseColor = function( self )
-            return {
-                254 / 255,
-                191 / 255,
-                191 / 255,
-                1,
-            };
+--
+--  Get default channel colors
+--
+--  @return table
+function CHATFRAME:GetBaseColor()
+    return {
+        254 / 255,
+        191 / 255,
+        191 / 255,
+        1,
+    }
+end
+
+--
+--  Get channel name
+--
+--  @param  string  Id
+--  @return int
+function CHATFRAME:GetChannelName( ChannelId )
+    local FrameChannels = CHATFRAME:GetChannels()
+
+    for _,ChannelData in pairs( FrameChannels ) do
+        if( tonumber( ChannelId ) == tonumber( ChannelData.Id ) ) then
+            return ChannelData.Name
+        end
+    end
+end
+
+--
+--  Get channel id
+--
+--  @param  string  ChannelName
+--  @return int
+function CHATFRAME:GetChannelId( ChannelName )
+    local FrameChannels = CHATFRAME:GetChannels()
+
+    for _,ChannelData in pairs( FrameChannels ) do
+        if( Addon:Minify( ChannelName ) == Addon:Minify( ChannelData.Name ) ) then
+            return Id
+        end
+    end
+end
+
+--
+--  Get club name for ID
+--
+--  @param  string  ChannelName
+--  @return string
+function CHATFRAME:GetClubNameForId( ClubId )
+    if( ClubId ) then
+        local ClubInfo = C_Club.GetClubInfo( ClubId )
+        if( ClubInfo ) then
+            local Name = ClubInfo.shortName
+            return Name:gsub( '%s+','' )
+        end
+    end
+end
+
+--
+--  Get club name
+--
+--  @param  string  ChannelName
+--  @return string
+function CHATFRAME:GetClubName( ChannelName )
+    local ClubData = Library:Explode( ChannelName,':' )
+    if( ( ClubData ) and ( tonumber( #ClubData ) > 0 ) ) then
+        local ClubId = ClubData[2] or 0
+        return self:GetClubNameForId( ClubId )
+    end
+end
+
+--
+--  Get GetChannelList() results
+--
+--  @return table
+function CHATFRAME:GetChannels()
+    local ChannelList = {}
+    local Channels = { GetChannelList() }
+    for i=1,#Channels,3 do
+
+        local LongName = Channels[ i+1 ]
+        local ClubName = self:GetClubName( LongName )
+        if( ClubName ) then
+            LongName = ClubName
         end
 
-        --
-        --  Is channel joined
-        --
-        --  @param  string  ChannelName
-        --  @return bool
-        Addon.CHAT.IsChannelJoined = function( self,ChannelName )
-            if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                Addon:Dump( ChatFrame.channelList );
-            end
+        ChannelList[ i ] = {
+            Id = Channels[ i ],
+            Name = LongName,
+            LongName = LongName,
+            Disabled = Channels[ i+2 ],
+            Color = self:GetBaseColor(),
+            Allowed = true,
+        }
 
-            for Id,Name in pairs( ChatFrame.channelList ) do
-                if( Addon:Minify( ChannelName ) == Addon:Minify( Name ) ) then
-                    return true;
+    end
+    return ChannelList;
+end
+
+function CHATFRAME:GetChannelLink( ... )
+    local ChannelId,ChannelBaseName,ChatType = ...
+
+    local Format
+    if( tonumber( ChannelId ) > 0 ) then
+        Format = "|Hchannel:channel:%s|h[%s]%s|h"
+        return string.format( Format,ChannelId,ChannelId,ChannelBaseName )
+    else
+        Format = "|Hchannel:%s|h[%s]|h"
+        return string.format( Format,ChatType,ChatType )
+    end
+end
+
+function CHATFRAME:GetBNetPlayerLink( ... )
+    local BNetIDAccount,AccountName = ...
+    
+    local Format = "|HBNplayer:%d|h[%s]|h"
+    return string.format( Format,tonumber( BNetIDAccount ) or 0,AccountName or 'Unknown Friend' )
+end
+
+function CHATFRAME:GetBNetChannelLink( ... )
+    local ClubId,ClubChannelId,ClubName,ChatType = ...
+
+    local Format
+    if( ClubId and ClubChannelId ) then
+        Format = "|Hchannel:club:%s:%s|h[%s]|h"
+        return string.format( Format,tostring( ClubId ),tostring( ClubChannelId ),tostring( ClubName ) )
+    else
+        Format = "|Hchannel:%s|h[%s]|h"
+        return string.format( Format,tostring( ChatType ),tostring( ChatType ) )
+    end
+end
+
+function CHATFRAME:GetClubChannelLink( ... )
+    local ClubId,ChannelId,ClubName = ...
+
+    local Format = "|Hchannel:club:%s:%s|h[%s]|h"
+    return string.format( Format,tostring( ClubId ),tostring( ChannelId ),ClubName or 'Community' )
+end
+
+function CHATFRAME:GetClubInviteLink( ... )
+    local InviteCode,CommunityName = ...
+
+    -- Format: |Hclubfinder:invite:code|h[Community: Name]|h
+    -- This string is what triggers the 'Join Community' confirmation dialog when clicked
+    local Format = "|Hclubfinder:invite:%s|h[%s]|h"
+    return string.format( Format,tostring( InviteCode ),CommunityName or 'Join Community' )
+end
+
+function CHATFRAME:ApplyChatColors()
+    local FrameChannels,DBChannels = self:GetChannels(),DB:GetPersistence().Channels
+
+    for Id,ChannelData in pairs( FrameChannels ) do
+        for _,Channel in pairs( DBChannels ) do
+            if( DBChannels[ ChannelData.Name ] and DBChannels[ ChannelData.Name ].Id ) then
+                if( DBChannels[ ChannelData.Name ].Color ) then
+                    local R,G,B,A = unpack( DBChannels[ ChannelData.Name ].Color )
+                    ChangeChatColor( 'CHANNEL'..ChannelData.Id,R,G,B,true )
                 end
             end
         end
+    end
+end
 
-        --
-        --  Join channel
-        --  @todo blizz does not expose JoinChannel or LeaveChannel source code. as such, 
-        --  i see no clear way to manage joined and left channels in a precise ordering.
-        --  for now, this function should not be used until it can be updated to truly allow 
-        --  joining a channel in specifc order
-        --
-        --  @return bool
-        Addon.CHAT.JoinChannel = function( self,ChannelName,ChannelId )
-            if( ChannelName ) then
-                local Type,Name = JoinPermanentChannel( ChannelName );
+function CHATFRAME:RefreshChannels()
+    local FrameChannels,DBChannels = self:GetChannels(),self:GetChannels()
 
-                local NumEntries = #ChatFrame.channelList or 0;
+    for Id,ChannelData in pairs( FrameChannels ) do
+        for _,Channel in pairs( DBChannels ) do
+            if( not DB:GetPersistence().Channels[ ChannelData.Name ] ) then
+                DB:GetPersistence().Channels[ ChannelData.Name ] = {
+                    Allowed = ChannelData.Allowed,
+                    Id = ChannelData.Id,
+                    Color = ChannelData.Cololr,
+                    Name = ChannelData.Name,
+                    LongName = ChannelData.LongName,
+                    Disabled = ChannelData.Disabled,
+                }
+            end
+        end 
+    end
+end
 
-                local PreviousEntry = ChatFrame.channelList[tonumber( ChannelId )] or nil;
+--
+--  Is channel joined
+--
+--  @param  string  ChannelName
+--  @return bool
+function CHATFRAME:IsChannelJoined( ChannelName )
+    if( DB:GetDBValue( 'Debug' ) ) then
+        Library:Dump( ChatFrame.channelList );
+    end
 
-                ChatFrame.channelList[tonumber( ChannelId )] = ChannelName;
+    for _,ChannelData in pairs( self:GetChannels() ) do
+        if( Library:Minify( ChannelName ) == Library:Minify( ChannelData.Name ) ) then
+            return true;
+        end
+    end
+end
 
-                if( PreviousEntry ) then
-                    ChatFrame.channelList[NumEntries+1] = PreviousEntry
-                end
-                if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                    Addon.FRAMES:Debug( 'Joined',ChannelName,'Position',tonumber( ChannelId ) );
-                end
-                return Addon:Minify( ChatFrame.channelList[tonumber( ChannelId )] ) == Addon:Minify( ChannelName );
+function CHATFRAME:RegisterCallbacks()
+    self:SecureHook( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
+        -- Add DB entry
+        self:RefreshChannels()
+
+        -- Respect ClassColors pref
+        if( DB:GetPersistence().Channels[ ChannelName ] ) then
+            local ChannelId = DB:GetPersistence().Channels[ ChannelName ].Id;
+            if( ChannelId ) then
+                ToggleChatColorNamesByClassGroup( DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
+            end
+            if( DB:GetDBValue( 'Debug' ) ) then
+                Library:Dump( DB:GetPersistence().Channels[ ChannelName ] )
             end
         end
-
-        --
-        --  Leave channel
-        --
-        --  @return void
-        Addon.CHAT.LeaveChannelByName = function( self,ChannelName )
-            if( ChannelName ) then
-                if( self:IsChannelJoined( ChannelName ) ) then
-
-                    local ChannelId = self:GetChannelId( ChannelName );
-
-                    if( tonumber( ChannelId ) > 0 ) then
-                        LeaveChannelByName( ChannelName );
-                        ChatFrame.channelList[tonumber( ChannelId )] = nil;
-                    end
-                end
+    end )
+    self:SecureHook( 'LeaveChannelByName',function( ChannelName )
+        -- Reemove DB entry
+        if( ChannelName ) then
+            if( DB:GetPersistence().Channels[ ChannelName ] ) then
+                DB:GetPersistence().Channels[ ChannelName ] = nil;
             end
         end
-
-        --
-        --  Get channel id
-        --
-        --  @param  string  ChannelName
-        --  @return int
-        Addon.CHAT.GetChannelId = function( self,ChannelName )
-            for Id,Name in pairs( ChatFrame.channelList ) do
-                if( Addon:Minify( ChannelName ) == Addon:Minify( Name ) ) then
-                    return Id;
-                end
-            end
-        end
-
-        --
-        --  Get channel name
-        --
-        --  @param  string  Id
-        --  @return int
-        Addon.CHAT.GetChannelName = function( self,ChannelId )
-            for Id,Name in pairs( ChatFrame.channelList ) do
-                if( tonumber( Id ) == tonumber( ChannelId ) ) then
-                    return Name;
-                end
-            end
-        end
-
-        --
-        --  Get GetChannelList() results
-        --
-        --  @return table
-        Addon.CHAT.GetChannels = function( self )
-            local ChannelList = {};
-            local Channels = { GetChannelList() };
-            for i = 1,#Channels,3 do
-                local LongName = Channels[i+1];
-
-                local ClubName = self:GetClubName( LongName );
-                if( ClubName ) then
-                    LongName = ClubName;
-                end
-
-                ChannelList[ i ] = {
-                    Id = Channels[i],
-                    Name = LongName,
-                    LongName = LongName,
-                    Disabled = Channels[i+2],
-                    Color = self:GetBaseColor(),
-                    Allowed = true,
-                };
-            end
-            return ChannelList;
-        end
-
-        --
-        --  Get club name
-        --
-        --  @param  string  ChannelName
-        --  @return string
-        Addon.CHAT.GetClubName = function( self,ChannelName )
-            local ClubData = Addon:Explode( ChannelName,':' );
-            if( ClubData and tonumber( #ClubData ) > 0 ) then
-                local ClubId = ClubData[2] or 0;
-                return Addon.CHAT:GetClubNameForId( ClubId );
-            end
-        end
-
-        --
-        --  Get club name for ID
-        --
-        --  @param  string  ChannelName
-        --  @return string
-        Addon.CHAT.GetClubNameForId = function( self,ClubId )
-            if( ClubId ) then
-                local ClubInfo = C_Club.GetClubInfo( ClubId );
-                if( ClubInfo ) then
-                    local Name = ClubInfo.shortName;
-                    return Name:gsub( '%s+','' );
-                end
-            end
-        end
-
-        -- @todo: review GetClubName and how it functions here
-        -- functionality may have gotten broken. check on this
-        Addon.CHAT.InitCommunity = function( self,ChatFrame,ClubId,StreamId )
-            C_Club.AddClubStreamChatChannel( ClubId,StreamId );
-            
-            local ChannelName = Chat_GetCommunitiesChannelName( ClubId,StreamId );
-            
-            local ChannelColor = CreateColor( unpack( self:GetBaseColor() ) );
-
-            local SetEditBoxToChannel;
-
-            local function ChatFrame_AddCommunitiesChannel(chatFrame, channelName, channelColor, setEditBoxToChannel)
-                local channelIndex = chatFrame:AddChannel(channelName);
-                chatFrame:AddMessage(COMMUNITIES_CHANNEL_ADDED_TO_CHAT_WINDOW:format(channelIndex, ChatFrame_ResolveChannelName(channelName)), channelColor:GetRGB());
-
-                if setEditBoxToChannel then
-                    chatFrame.editBox:SetAttribute("channelTarget", channelIndex);
-                    chatFrame.editBox:SetAttribute("chatType", "CHANNEL");
-                    chatFrame.editBox:SetAttribute("stickyType", "CHANNEL");
-                    ChatEdit_UpdateHeader(chatFrame.editBox);
-                end
-            end
-
-            local Found;
-            local NewInfo = C_Club.GetClubInfo( ClubId );
-            for ChannelId,CName in pairs( ChatFrame.channelList ) do
-
-                local OldName = self:GetClubName( CName );
-                NewInfo.name = NewInfo.name;
-                NewInfo.name = NewInfo.name:gsub( '%s+','' );
-
-                if( NewInfo and NewInfo.name and OldName ) then
-
-                    local ClubStreams = C_Club.GetStreams( NewInfo.clubId );
-                    if( ClubStreams ) then
-                        for v,Stream in pairs( ClubStreams ) do
-                            if( Stream.streamId ) then
-                                if( OldName == NewInfo.name and Stream.streamId == StreamId ) then
-                                    Found = true;
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            if( not Found ) then
-                ChatFrame_AddCommunitiesChannel( ChatFrame,ChannelName,ChannelColor,SetEditBoxToChannel );
-            end
-        end
-
-        Addon.CHAT.GetChannelLink = function( self,... )
-            local ChannelId,ChannelBaseName,ChatType = ...;
-
-            local Format;
-            if( tonumber( ChannelId ) > 0 ) then
-                Format = "|Hchannel:channel:%s|h[%s]%s|h";
-                return string.format( Format,ChannelId,ChannelId,ChannelBaseName );
-            else
-                Format = "|Hchannel:%s|h[%s]|h";
-                return string.format( Format,ChatType,ChatType );
-            end
-        end
-
-        Addon.CHAT.RefreshDBChannels = function( self )
-            local FrameChannels,DBChannels = self:GetChannels(),self:GetChannels();
-
-            for Id,ChannelData in pairs( FrameChannels ) do
-                for _,Channel in pairs( DBChannels ) do
-                    if( not Addon.DB:GetPersistence().Channels[ ChannelData.Name ] ) then
-                        Addon.DB:GetPersistence().Channels[ ChannelData.Name ] = {
-                            Allowed = ChannelData.Allowed,
-                            Id = ChannelData.Id,
-                            Color = self:GetBaseColor(),
-                            Name = ChannelData.Name,
-                            LongName = ChannelData.LongName,
-                            Disabled = ChannelData.Disabled,
-                        };
-                    end
-                end 
-            end
-        end
-
-        Addon.CHAT.ApplyChatColors = function( self )
-            local FrameChannels,DBChannels = self:GetChannels(),Addon.DB:GetPersistence().Channels;
-
-            for Id,ChannelData in pairs( FrameChannels ) do
-                for _,Channel in pairs( DBChannels ) do
-                    if( DBChannels[ ChannelData.Name ] and DBChannels[ ChannelData.Name ].Id ) then
-                        if( DBChannels[ ChannelData.Name ].Color ) then
-                            local R,G,B,A = unpack( DBChannels[ ChannelData.Name ].Color );
-                            ChangeChatColor( 'CHANNEL'..ChannelData.Id,R,G,B,true );
-                        end
-                    end
-                end
-            end
-        end
-        
-        --
-        -- Set chat group
-        --
-        -- @return void
-        Addon.CHAT.SetGroup = function( self,Group,Value )
-            if ( Value ) then
-                ChatFrame_AddMessageGroup( ChatFrame,Group );
-            else
-                ChatFrame_RemoveMessageGroup( ChatFrame,Group );
-            end
-        end
-
-        --
-        --  Module init
-        --
-        --  @return void
-        Addon.CHAT.Init = function( self )
-
-            -- Iterate channels
-            self:GetChannels();
-
-            -- Hooks
-            self.Hooks = {};
-
-            for i = 1, 10 do
-                local Frame = _G[ 'ChatFrame'..i ];
+    end )
+    self:SecureHook( 'SetItemRef',function( Pattern,FullText )
+        local linkType,addon,param1 = strsplit( ':',Pattern );
+        print( addon )
+        if( linkType == 'addon' and addon == 'jChat' ) then
+            if( param1 == 'url' ) then
+                local Frame = _G[ 'ChatFrame'..1 ];
                 if( Frame ) then
-                    -- Messages
-                    self.Hooks[ Frame ] = Frame.AddMessage;
-                    Frame.AddMessage = Addon.APP.AddMessage;
+                    Frame.editBox:SetText( FullText:match( ">(.-)<" ) );
+
+                    ChatEdit_ActivateChat( Frame.editBox );
+                    
+                    Frame.editBox:HighlightText();
                 end
             end
+        end
+    end );
 
-            -- Fonts, Fading, Scrolling
-            for i = 1, 10 do
-                local Frame = _G[ 'ChatFrame'..i ];
-                if( Frame ) then
-                    -- Font
-                    local Font = Addon.CONFIG:GetValue( 'Font' );
-                    C_Timer.After(0, function()
-                        if( Addon.DB.FONTS[ Font.Family ] ) then
-                            Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                        end
-                        Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                        Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-                    end );
+    ChatFrame.editBox:HookScript( 'OnEditFocusGained',function( self,... )
+        local ChannelId = self:GetAttribute( 'channelTarget' );
+        local ChannelName = CHATFRAME:GetChannelName( ChannelId );
+        local DBChannels = DB:GetPersistence().Channels;
 
-                    -- Fading
-                    local Fading = Addon.CONFIG:GetValue( 'FadeOut' );
-                    C_Timer.After(0, function()
-                        Frame:SetFading( Fading );
-                    end );
-
-                    -- Scrolling
-                    local Scrolling = Addon.CONFIG:GetValue( 'ScrollBack' );
-                    C_Timer.After(0, function()
-                        if( Scrolling ) then
-                            Frame:SetMaxLines( 10000 );
-                        else
-                            Frame:SetMaxLines( 128 );
-                        end
-                    end );
+        for i,v in pairs( DBChannels ) do
+            if( v and v.Id and ChannelId == v.Id ) then
+                if( v.Name ) then
+                    self:SetTextColor( unpack( DBChannels[ v.Name ].Color ) );
                 end
             end
+        end
+    end );
 
-            -- DB all joins
-            self:RefreshDBChannels();
-
-            -- Respect ClassColors pref
-            if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id;
-                if( ChannelId ) then
-                    ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ),true );
-                end
+    self:SecureHook( 'FCF_SetChatWindowFontSize',function( self,Frame,FontSize )
+        local Font = DB:GetDBValue( 'Font' );
+        C_Timer.After(0, function()
+            if( DB.FONTS[ Font.Family ] ) then
+                Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
             end
+            Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+            Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+        end );
+    end );
 
-            -- Refresh Chat Colors
-            self:ApplyChatColors();
+    self:SecureHook( 'FCF_CopyChatSettings',function( NewFrame,ExistingFrame )
+        local Frame = NewFrame;
 
-            self:RegisterCallbacks();
+        -- Fading
+        local MyValue = DB:GetDBValue( 'FadeOut' );
+        Frame:SetFading( MyValue );
+
+        -- Scrolling
+        local MyValue = DB:GetDBValue( 'ScrollBack' );
+        if( MyValue ) then
+            Frame:SetMaxLines( 10000 );
+        else
+            Frame:SetMaxLines( 128 );
         end
 
-        Addon.CHAT.RegisterCallbacks = function( self )
-            hooksecurefunc( 'SetItemRef',function( Pattern,FullText )
-                local linkType,addon,param1 = strsplit( ':',Pattern );
-                if( linkType == 'addon' and addon == 'jChat' ) then
-                    if( param1 == 'url' ) then
-                        local Frame = _G[ 'ChatFrame'..1 ];
-                        if( Frame ) then
-                            Frame.editBox:SetText( FullText:match( ">(.-)<" ) );
+        -- Font
+        local Font = DB:GetDBValue( 'Font' );
+        if( DB.FONTS[ Font.Family ] ) then
+            Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+        end
+        Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
+        Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
+    end );
 
-                            ChatEdit_ActivateChat( Frame.editBox );
-                            
-                            Frame.editBox:HighlightText();
-                        end
-                    end
-                end
-            end );
-            -- Join Channel
-            hooksecurefunc( 'JoinPermanentChannel',function( ChannelName,Password,FrameId,Voice )
+    self:SecureHook( 'FCF_ResetAllWindows',function()
+        -- Colors
+        CHATFRAME:ApplyChatColors();
 
-                -- Add DB entry
-                if( not Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                    Addon.DB:GetPersistence().Channels[ ChannelName ] = {};
-                    for Id,ChannelData in pairs( self:GetChannels() ) do
-                        if( Addon:Minify( ChannelData.Name ):find( Addon:Minify( ChannelName ) ) ) then
-                            Addon.DB:GetPersistence().Channels[ ChannelName ] = {
-                                Allowed = ChannelData.Allowed,
-                                Id = ChannelData.Id,
-                                Color = self:GetBaseColor(),
-                                Name = ChannelData.Name,
-                                LongName = ChannelData.LongName,
-                                Disabled = ChannelData.Disabled,
-                            };
+        -- Font
+        for i = 1, 10 do
+            local Frame = _G[ 'ChatFrame'..i ];
+            if( Frame and DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                DB:GetPersistence().Font[ Info.arg ] = Value
 
-                            if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-                                Addon:Dump( Addon.DB:GetPersistence().Channels[ ChannelName ] );
-                            end
-                        end
-                    end
+                local Font = DB:GetDBValue( 'Font' )
+                if( DB.FONTS[ Font.Family ] ) then
+                    Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags )
                 end
 
-                -- Respect ClassColors pref
-                if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                    local ChannelId = Addon.DB:GetPersistence().Channels[ ChannelName ].Id;
-                    if( ChannelId ) then
-                        ToggleChatColorNamesByClassGroup( Addon.DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
-                    end
+                if( Frame.RefreshLayout ) then
+                    Frame:RefreshLayout()
                 end
-            end );
-            -- Leave Channel
-            hooksecurefunc( 'LeaveChannelByName',function( ChannelName )
-                if( ChannelName ) then
-                    if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                        Addon.DB:GetPersistence().Channels[ ChannelName ] = nil;
-                    end
+            end
+        end
+
+        -- Fading
+        for i = 1, 10 do
+            local Frame = _G[ 'ChatFrame'..i ];
+            if( Frame ) then
+                if( Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = Value
+
+                    Frame:SetFading( true );
+                elseif( not Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = Value
+
+                    Frame:SetFading( false );
                 end
-            end );
-            -- Editbox Focus
-            ChatFrame.editBox:HookScript( 'OnEditFocusGained',function( self,... )
+            end
+        end
 
-                local ChannelId = self:GetAttribute( 'channelTarget' );
-                local ChannelName = Addon.CHAT:GetChannelName( ChannelId );
-                local DBChannels = Addon.DB:GetPersistence().Channels;
+        -- Scrolling
+        for i = 1, 10 do
+            local Frame = _G[ 'ChatFrame'..i ]
+            if( Frame ) then
+                if( Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = Value
 
-                for i,v in pairs( DBChannels ) do
-                    if( v and v.Id and ChannelId == v.Id ) then
-                        if( v.Name ) then
-                            self:SetTextColor( unpack( DBChannels[ v.Name ].Color ) );
-                        end
-                    end
+                    Frame:SetMaxLines( 10000 )
+                elseif( not Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = Value
+
+                    Frame:SetMaxLines( 128 )
                 end
-            end );
-            -- Font size
-            hooksecurefunc( 'FCF_SetChatWindowFontSize',function( self,Frame,FontSize )
-                local Font = Addon.CONFIG:GetValue( 'Font' );
-                C_Timer.After(0, function()
-                    if( Addon.DB.FONTS[ Font.Family ] ) then
-                        Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                    end
-                    Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                    Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-                end );
-            end );
-            -- New Tab
-            hooksecurefunc( 'FCF_CopyChatSettings',function( NewFrame,ExistingFrame )
-                local Frame = NewFrame;
+            end
+        end
+    end );
 
-                -- Fading
-                local MyValue = Addon.CONFIG:GetValue( 'FadeOut' );
-                Frame:SetFading( MyValue );
+    self:SecureHook( 'ChangeChatColor',function( ChannelName,R,G,B,Internal )
+        if( not Internal ) then
+            if( DB:GetPersistence().Channels[ ChannelName ] ) then
+                DB:GetPersistence().Channels[ ChannelName ].Color = R,G,B;
+            end
+        end
+    end );
+    self:SecureHook( 'ToggleChatColorNamesByClassGroup',function( Checked,Group,Internal )
+        if( not Internal ) then
+            -- We don't care
+        end
+    end );
 
-                -- Scrolling
-                local MyValue = Addon.CONFIG:GetValue( 'ScrollBack' );
-                if( MyValue ) then
+    self:SecureHook( 'ToggleChatMessageGroup',function( Checked,Group )
+        if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatFrame,Group ) ~= nil ) then
+            if( DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
+                DB:GetPersistence().ChatGroups[ Group ] = Checked;
+            end
+        end
+    end );
+end
+
+function CHATFRAME:RefreshFont()
+    for i = 1, 10 do
+        local Frame = _G[ 'ChatFrame'..i ];
+        local Font = DB:GetDBValue( 'Font' );
+
+        if( Frame and Font ) then
+            C_Timer.After(0, function()
+                if( DB.FONTS[ Font.Family ] ) then
+                    Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
+                end
+
+                if( Frame.RefreshLayout ) then
+                    Frame:RefreshLayout();
+                end
+            end )
+        end
+    end
+end
+
+function CHATFRAME:RefreshFade()
+    for i = 1, 10 do
+        local Frame = _G[ 'ChatFrame'..i ];
+        local Fade = DB:GetDBValue( 'FadeOut' );
+
+        if( Fade ~= nil ) then
+            C_Timer.After(0, function()
+                if( Frame and Fade ) then
+                    Frame:SetFading( Fade );
+                end
+            end )
+        end
+    end
+end
+
+function CHATFRAME:RefreshScroll()
+    for i = 1, 10 do
+        local Frame = _G[ 'ChatFrame'..i ];
+        local Scroll = DB:GetDBValue( 'ScrollBack' );
+
+        if( Frame ) then
+            C_Timer.After(0, function()
+                if( Scroll ) then
                     Frame:SetMaxLines( 10000 );
                 else
                     Frame:SetMaxLines( 128 );
                 end
-
-                -- Font
-                local Font = Addon.CONFIG:GetValue( 'Font' );
-                if( Addon.DB.FONTS[ Font.Family ] ) then
-                    Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                end
-                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-            end );
-            -- Reset chat
-            hooksecurefunc( 'FCF_ResetAllWindows',function()
-                -- Colors
-                Addon.CHAT:ApplyChatColors();
-
-                -- Font
-                for i = 1, 10 do
-                    local Frame = _G[ 'ChatFrame'..i ];
-                    if( Frame ) then
-                        local Font = Addon.CONFIG:GetValue( 'Font' );
-
-                        C_Timer.After(0, function()
-                            if( Addon.DB.FONTS[ Font.Family ] ) then
-                                Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                            end
-                            Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                            Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-                        end );
-                        
-                    end
-                end
-
-                -- Fading
-                for i = 1, 10 do
-                    local Frame = _G[ 'ChatFrame'..i ];
-                    if( Frame ) then
-                        local MyValue = Addon.CONFIG:GetValue( 'FadeOut' );
-
-                        C_Timer.After(0, function()
-                            Frame:SetFading( MyValue );
-                        end );
-                    end
-                end
-
-                -- Scrolling
-                for i = 1, 10 do
-                    local Frame = _G[ 'ChatFrame'..i ];
-                    if( Frame ) then
-                        local MyValue = Addon.CONFIG:GetValue( 'ScrollBack' );
-
-                        C_Timer.After(0, function()
-                            if( MyValue ) then
-                                Frame:SetMaxLines( 10000 );
-                            else
-                                Frame:SetMaxLines( 128 );
-                            end
-                        end );
-                    end
-                end
-            end );
-            hooksecurefunc( 'ChangeChatColor',function( ChannelName,R,G,B,Internal )
-                if( not Internal ) then
-                    if( Addon.DB:GetPersistence().Channels[ ChannelName ] ) then
-                        Addon.DB:GetPersistence().Channels[ ChannelName ].Color = R,G,B;
-                    end
-                end
-            end );
-            hooksecurefunc( 'ToggleChatColorNamesByClassGroup',function( Checked,Group,Internal )
-                if( not Internal ) then
-                    -- We don't care
-                end
-            end );
-            hooksecurefunc( 'ToggleChatMessageGroup',function( Checked,Group )
-                if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatFrame,Group ) ~= nil ) then
-                    if( Addon.DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
-                        Addon.DB:GetPersistence().ChatGroups[ Group ] = Checked;
-                    end
-                end
-            end );
+            end )
         end
-
-        self:UnregisterEvent( 'ADDON_LOADED' );
     end
-end );
+end
+
+function CHATFRAME:Refresh()
+    self:RefreshFont()
+    self:RefreshFade()
+    self:RefreshScroll()
+end
+
+function CHATFRAME:OnEnable()
+    self.Hooks = {};
+    self:RefreshChannels()
+    self:ApplyChatColors()
+    self:RegisterCallbacks()
+end

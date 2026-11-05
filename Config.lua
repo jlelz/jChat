@@ -1,1099 +1,554 @@
-local _, Addon = ...;
-local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME;
-local ChatFrame = DEFAULT_CHAT_FRAME;
+local _,Library = ...;
 
-Addon.CONFIG = CreateFrame( 'Frame' );
-Addon.CONFIG:RegisterEvent( 'ADDON_LOADED' );
-Addon.CONFIG:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChat' ) then
+local ADDON = LibStub( 'AceAddon-3.0' ):GetAddon( 'jChat' )
+local DB = ADDON:GetModule( 'database' )
+local CHATFRAME = ADDON:GetModule( 'chatframe' )
+local CONFIG,NAME = ADDON:NewModule( 'config','AceConsole-3.0' ),'jChat'
 
-        --
-        -- Set DB value
-        --
-        -- @return void
-        Addon.CONFIG.SetValue = function( self,Index,Value )
-            Addon.DB:SetValue( Index,Value );
-        end
+function CONFIG:GetChannels()
+  	return DB:GetPersistence().Channels
+end
 
-        --
-        -- Get DB value
-        --
-        -- @return mixed
-        Addon.CONFIG.GetValue = function( self,Index )
-            return Addon.DB:GetValue( Index );
-        end
-
-        --
-        --  Get module settings
-        --
-        --  @return table
-        Addon.CONFIG.GetSettings = function( self )
-            local function GetAlerts()
-                local Order = 1;
-                local Settings = {
-                    Alerts = {
-                        type = 'header',
-                        order = Order,
-                        name = 'Custom Alerts',
-                    },
-                };
-                Order = Order+1;
-                Settings.AlertList = {
-                    type = 'input',
-                    order = Order,
-                    multiline = true,
-                    get = function( Info )
-                        return Addon:Implode( self:GetAlerts(),',' );
-                    end,
-                    set = function( Info,Value )
-                        self:SetAlerts( Value );
-                    end,
-                    name = 'Alert List',
-                    desc = 'Words or phrases to be alerted on when they are mentioned in chat. Seperate individual things to alert on with a comma: e.g. healer,spriest,sfk,really cool',
-                    arg = 'AlertList',
-                    width = 'full',
-                };
-                Order = Order+1;
-                Settings.IgnoreList = {
-                    type = 'input',
-                    order = Order,
-                    multiline = true,
-                    get = function( Info )
-                        return Addon:Implode( self:GetIgnores(),',' );
-                    end,
-                    set = function( Info,Value )
-                        self:SetIgnores( Value );
-                    end,
-                    name = 'Ignore List',
-                    desc = 'Words or phrases which should be omitted in chat. Seperate individual things to ignore with a comma: e.g. boost,spam,anidiot,absolutely terrible',
-                    arg = 'IgnoreList',
-                    width = 'full',
-                };
-
-                Order = Order+1;
-                Settings.AlertHighlights = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Highlights',
-                };
-                Order = Order+1;
-                Settings.AlertColor = {
-                    type = 'color',
-                    order = Order,
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            return unpack( Addon.DB:GetPersistence()[ Info.arg ] );
-                        end
-                    end,
-                    set = function( Info,R,G,B,A )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
-                        end
-                    end,
-                    name = 'Alert Color',
-                    desc = 'Set the color of Alerts chat',
-                    arg = 'AlertColor',
-                    --hasAlpha = true,
-                };
-                Order = Order+1;
-                Settings.AlertQuest = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Quests',
-                    desc = 'Enable/disable alerting if anyone mentions a quest you are on',
-                    arg = 'QuestAlert',
-                };
-
-                Order = Order+1;
-                Settings.AlertSounds = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Sounds',
-                };
-                Order = Order+1;
-                Settings.AlertChannel = {
-                    type = 'select',
-                    order = Order,
-                    name = 'Sound Channel',
-                    desc = 'Alert sound channel',
-                    values = {
-                        SFX = 'SFX',
-                        Master = 'Master',
-                        Music = 'Music',
-                        Ambience = 'Ambience',
-                        Dialog = 'Dialog',
-                    },
-                    arg = 'AlertChannel',
-                };
-                Order = Order+1;
-                Settings.AlertVolume = {
-                    type = 'range',
-                    order = Order,
-                    name = 'Sound Volume',
-                    desc = 'Alert sound volume',
-                    min = 0,max = 1,step = 0.1,
-                    set = function( Info,Value )
-                        local SoundChannel = Addon.CONFIG:GetValue( 'AlertChannel' );
-                        local CVarSetting = 'Sound_'..SoundChannel..'Volume';
-                        local SoundChannelVolume = GetCVar( CVarSetting );
-                        if( SoundChannelVolume ~= nil ) then
-                            SetCVar( CVarSetting,Value );
-                        end
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = Value;
-                        end
-                    end,
-                    arg = 'AlertVolume',
-                };
-
-                return Settings;
-            end
-            local function GetMessages()
-                local Order = 1;
-                local Settings = {
-                    Alerts = {
-                        type = 'header',
-                        order = Order,
-                        name = 'Personal Alerts',
-                    },
-                };
-
-                Order = Order+1;
-                Settings.AlertMention = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Personal Mention Alert',
-                    desc = 'Enable/disable alerting if anyone mentions your name. Note that mentions always produce an alert sound and have the whisper color',
-                    arg = 'MentionAlert',
-                };
-                Order = Order+1;
-                Settings.AliasList = {
-                    type = 'input',
-                    order = Order,
-                    multiline = true,
-                    get = function( Info )
-                        return Addon:Implode( self:GetAliasList(),',' );
-                    end,
-                    set = function( Info,Value )
-                        self:SetAliasList( Value );
-                    end,
-                    name = 'Alert Alias List',
-                    desc = 'Comma seperated list of aliases for your character name, to be used in mention alerts',
-                    arg = 'Aliases',
-                    width = 'normal',
-                    multiline = false,
-                };
-
-                return Settings;
-            end
-            local function GetDungeons()
-
-                local Order = 1;
-                local Settings = {
-                    DungeonGroups = {
-                        type = 'header',
-                        order = Order,
-                        name = 'Classic Dungeon Groups',
-                    },
-                };
-                for Abbrev,Instance in Addon:Sort( Addon.DUNGEONS:GetDungeonsF( UnitLevel( 'player' ) ) ) do
-                    Instance.Locked = Addon.DUNGEONS:IsLocked( Instance );
-                    if( not Addon.DB:GetPersistence().RespectLocks ) then
-                        Instance.Locked = false;
-                    end
-                    Order = Order + 1;
-                    Settings[ Abbrev ] = {
-                        type = 'toggle',
-                        order = Order,
-                        name = CreateColor( unpack( Instance.Color ) ):WrapTextInColorCode( Instance.Name ),
-                        desc = Instance.Description,
-                        arg = Abbrev,
-                        disabled = Instance.Disabled or Instance.Locked,
-                        get = function( Info )
-                            if( Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] ~= nil ) then
-                                if( Instance.Locked and Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] ) then
-                                    Addon.DB:GetPersistence().DungeonQueue[ Info.arg ] = false;
-                                end
-                                return Addon.DB:GetPersistence().DungeonQueue[ Info.arg ];
-                            end
-                        end,
-                        set = function( Info,Value )
-                            local ABBREV = Info.arg;
-                            Addon.DB:GetPersistence().DungeonQueue[ ABBREV ] = Value;
-                        end,
-                    };
-                end
-                Order = Order + 1;
-                Settings.RaidGroups = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Classic Raid Groups',
-                };
-                for Abbrev,Instance in Addon:Sort( Addon.DUNGEONS:GetRaidsF( UnitLevel( 'player' ) ) ) do
-                    Instance.Locked = Addon.DUNGEONS:IsLocked( Instance );
-                    if( not Addon.DB:GetPersistence().RespectLocks ) then
-                        Instance.Locked = false;
-                    end
-                    Order = Order + 1;
-                    Settings[ Abbrev ] = {
-                        type = 'toggle',
-                        order = Order,
-                        name = CreateColor( unpack( Instance.Color ) ):WrapTextInColorCode( Instance.Name ),
-                        desc = Instance.Description,
-                        arg = Abbrev,
-                        disabled = Instance.Disabled or Instance.Locked,
-                        get = function( Info )
-                            if( Addon.DB:GetPersistence().RaidQueue[ Info.arg ] ~= nil ) then
-                                if( Instance.Locked and Addon.DB:GetPersistence().RaidQueue[ Info.arg ] ) then
-                                    Addon.DB:GetPersistence().RaidQueue[ Info.arg ] = false;
-                                end
-                                return Addon.DB:GetPersistence().RaidQueue[ Info.arg ];
-                            end
-                        end,
-                        set = function( Info,Value )
-                            Addon.DB:GetPersistence().RaidQueue[ Info.arg ] = Value;
-                        end,
-                    };
-                end
-
-                Order = Order + 1;
-                Settings.QueueConfig = {
-                    type = 'header',
-                    order = Order,
-                    name = '---',
-                };
-
-                Order = Order + 1;
-                Settings.RespectLocks = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Respect Lockouts',
-                    desc = 'Disable instances for which you are locked',
-                    arg = 'RespectLocks',
-                };
-
-                return Settings;
-            end
-            local function GetChannels()
-                local Order = 1;
-                local Settings = {
-                    BypassTypes = {
-                        type = 'toggle',
-                        order = Order,
-                        name = 'Bypass Channel Permission',
-                        desc = 'Allow disabled channel messages which are alerting',
-                        arg = 'BypassTypes',
-                    },
-                };
-
-                Order = Order+1;
-                Settings.ShortChannelNames = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Short Channel Names',
-                    desc = 'For channels with long names, shorten them with abbreviation',
-                    arg = 'ShortChannelNames',
-                };
-
-                --[[
-                Order = Order+1;
-                Settings.Channels = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Channels',
-                };
-
-                Order = Order+1;
-                Settings.GeneralChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[1)General]',
-                    desc = 'Local General channel',
-                    arg = 'general:1',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.TradeChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[2)Trade]',
-                    desc = 'Trade channel',
-                    arg = 'trade:2',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.LocalDefenseChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[3)LocalDefense]',
-                    desc = 'Local Defense channel',
-                    arg = 'localdefense:3',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.WorldDefenseChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[4)WorldDefense]',
-                    desc = 'World Defense channel',
-                    arg = 'worlddefense:4',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.LookingForGroupChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[5)LookingForGroup]',
-                    desc = 'LFG/Looking For Group channel',
-                    arg = 'lookingforgroup:5',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.WorldChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[6)World]',
-                    desc = 'World channel',
-                    arg = 'world:6',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.RPChannel = {
-                    type = 'toggle',
-                    order = Order,
-                    name = '[7)RP]',
-                    desc = 'RolePlay channel',
-                    arg = 'rp:7',
-                    get = function( Info )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:GetConnectedChannel( ChannelName );
-                    end,
-                    set = function( Info,Value )
-                        local Data = Addon:Explode( Info.arg,':' );
-                        local ChannelName,ChannelId = Data[1],Data[2];
-                        return self:SetConnectedChannel( ChannelName,ChannelId,Value )
-                    end,
-                };
-                ]]
-
-                Order = Order+1;
-                Settings.ChannelsAllowed = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Message Channels',
-                };
-                for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
-                    if( ChannelData.Name ) then
-                        local ClubName = Addon.CHAT:GetClubName( ChannelData.Name );
-                        if( ClubName ) then
-                            ChannelData.Name = ClubName;
-                        end
-                        
-                        Order = Order+1;
-                        Settings[ ChannelData.Name..'Allowed' ] = {
-                            type = 'toggle',
-                            order = Order,
-                            get = function( Info )
-                                if( Addon.DB:GetPersistence().Channels[ Info.arg ] ) then
-                                    return Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed;
-                                end
-                            end,
-                            set = function( Info,Value )
-                                Addon.DB:GetPersistence().Channels[ Info.arg ].Allowed = Value;
-                            end,
-                            name = '[['..ChannelData.Id..']'..ChannelData.Name..']',
-                            desc = 'Allow '..ChannelData.Name..' messages',
-                            arg = ChannelData.Name,
-                        };
-                    end
-                end
-
-                Order = Order+1;
-                Settings.ChannelColors = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Message Colors',
-                };
-
-                for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
-                    if( ChannelData.Name ) then
-                        local ClubName = Addon.CHAT:GetClubName( ChannelData.Name );
-                        if( ClubName ) then
-                            ChannelData.Name = ClubName;
-                        end
-
-                        Order = Order+1;
-                        Settings[ ChannelData.Name..'Color' ] = {
-                            type = 'color',
-                            order = Order,
-                            get = function( Info )
-                                if( Addon.DB:GetPersistence().Channels[ Info.arg ] and not Addon.DB:GetPersistence().Channels[ Info.arg ].Color ) then
-                                    Addon.DB:GetPersistence().Channels[ Info.arg ].Color = Addon.CHAT:GetBaseColor();
-                                end
-                                return unpack( Addon.DB:GetPersistence().Channels[ Info.arg ].Color );
-                            end,
-                            set = function( Info,R,G,B,A )
-                                local InternalCall = true;
-                                if( Addon.DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
-
-                                    -- Change color
-                                    Addon.DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A };
-
-                                    -- Refresh config
-                                    Addon.CHAT:ApplyChatColors();
-                                    
-                                end
-                            end,
-                            name = '[['..ChannelData.Id..']'..ChannelData.Name..']',
-                            desc = 'Set the color of '..ChannelData.Name..' chat',
-                            arg = ChannelData.Name,
-                            --hasAlpha = true,
-                        };
-                    end
-                end
-
-                Order = Order+1;
-                Settings.ChannelMessages = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Message Types',
-                };
-
-                for GroupName,GroupData in pairs( self:GetMessageGroups() ) do
-                    Order = Order+1;
-                    Settings[ GroupName..'Message' ] = {
-                        type = 'toggle',
-                        order = Order,
-                        name = GroupName,
-                        desc = 'Enable/disable messages for '..GroupName,
-                        arg = GroupName,
-                        get = function( Info )
-                            if( Addon.DB:GetPersistence().ChatGroups[ Info.arg ] ~= nil ) then
-                                return Addon.DB:GetPersistence().ChatGroups[ Info.arg ];
-                            end
-                        end,
-                        set = function( Info,Value )
-                            if( Addon.DB:GetPersistence().ChatGroups[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().ChatGroups[ Info.arg ] = Value;
-                                for _,GroupName in pairs( self:GetMessageGroups()[ Info.arg ] ) do
-                                    -- Always allow outgoing whispers
-                                    if( Addon:Minify( GroupName ):find( 'whisperinform' ) ) then
-                                        Value = true;
-                                    end
-                                    Addon.CHAT:SetGroup( GroupName,Value );
-                                end
-                            end
-                        end,
-                    };
-                end
-
-                return Settings;
-            end
-
-            local function GetGeneral()
-                local Order = 1;
-                local Settings = {
-                    General = {
-                        type = 'header',
-                        order = Order,
-                        name = 'General',
-                    },
-                };
-                Order = Order+1;
-                Settings.ScrollBack = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Scroll Back',
-                    desc = 'Extend chat history to 10,000 lines',
-                    arg = 'ScrollBack',
-                    set = function( Info,Value )
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-
-                            if( Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
-
-                                Frame:SetMaxLines( 10000 );
-                            elseif( not Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
-
-                                Frame:SetMaxLines( 128 );
-                            end
-                        end
-                    end,
-                };
-                Order = Order+1;
-                Settings.FadeOut = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Fade Out',
-                    desc = 'Enable/disable chat fading',
-                    arg = 'FadeOut',
-                    set = function( Info,Value )
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-
-                            if( Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
-
-                                Frame:SetFading( true );
-                            elseif( not Value and Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence()[ Info.arg ] = Value;
-
-                                Frame:SetFading( false );
-                            end
-                        end
-                    end,
-                };
-                Order = Order+1;
-                Settings.AutoInvite = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Auto Invite',
-                    desc = 'Automatically accept party members who send "inv" messages',
-                    arg = 'AutoInvite',
-                };
-                Order = Order+1;
-                Settings.ShowTimestamps = {
-                    type = 'select',
-                    values = {
-                        none = 'none',
-                        hour_min_12 = 'hour_min_12',
-                        hour_min_ext = 'hour_min_ext',
-                        hour_min_sec_12_ext = 'hour_min_sec_12_ext',
-                        hour_min_24 = 'hour_min_24',
-                        hour_min_sec_24 = 'hour_min_sec_24',
-                    },
-                    order = Order,
-                    name = 'Timestamps',
-                    desc = 'Timestamp format',
-                    arg = 'showTimestamps',
-                };
-                Order = Order+1;
-                Settings.TimeColor = {
-                    type = 'color',
-                    order = Order,
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            return unpack( Addon.DB:GetPersistence()[ Info.arg ] );
-                        end
-                    end,
-                    set = function( Info,R,G,B,A )
-                        if( Addon.DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                            Addon.DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
-                        end
-                    end,
-                    name = 'Timestamps',
-                    desc = 'Timestamp Color',
-                    arg = 'TimeColor',
-                    --hasAlpha = true,
-                };
-                Order = Order + 1;
-                Settings.ClassColors = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Class Colors',
-                    desc = 'Enable/Disable Chat Class Colors',
-                    arg = 'ClassColors',
-                    set = function( Info,Value )
-                        Addon.DB:GetPersistence()[ Info.arg ] = Value;
-
-                        for i,ChannelData in pairs( Addon.CHAT:GetChannels() ) do
-                            if( ChannelData.Id ) then
-                                ToggleChatColorNamesByClassGroup( Value,tostring( 'CHANNEL'..ChannelData.Id ) );
-                            end
-                        end
-                    end,
-                };
-
-                Order = Order+1;
-                Settings.LinksEnabled = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Links',
-                    desc = 'Automatically convert links to clickable',
-                    arg = 'LinksEnabled',
-                };
-
-                local LSM = LibStub( 'LibSharedMedia-3.0',true );
-                if( LSM ) then
-                    LSM:Register( 'font','Enigmatic', Addon.DB.FONTS.Enigmatic );
-                end
-
-                Order = Order+1;
-                Settings.FontSection = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Font',
-                };
-                Order = Order+1;
-                Settings.FontFamily = {
-                    type = 'select',
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                            return Addon.DB:GetPersistence().Font[ Info.arg ];
-                        end
-                    end,
-                    set = function( Info,Value )
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
-
-                                local Font = Addon.CONFIG:GetValue( 'Font' );
-                                if( Addon.DB.FONTS[ Font.Family ] ) then
-                                    Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                                end
-
-                                if( Frame.RefreshLayout ) then
-                                    Frame:RefreshLayout();
-                                end
-                            end
-                        end
-                    end,
-                    values = {
-                        skurri = 'skurri',
-                        Enigmatic = 'Enigmatic',
-                        ARIALN = 'ARIALN',
-                        MORPHEUS = 'MORPHEUS',
-                        FRIZQT__ = 'FRIZQT__',
-                    },
-                    order = Order,
-                    name = 'Font Family',
-                    desc = 'Chat Font Family',
-                    arg = 'Family',
-                };
-                Order = Order+1;
-                Settings.FontSize = {
-                    type = 'select',
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                            return Addon.DB:GetPersistence().Font[ Info.arg ];
-                        end
-                    end,
-                    set = function( Info,Value )
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-                            if( Frame and Addon.DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
-                                Addon.DB:GetPersistence().Font[ Info.arg ] = Value;
-
-                                local Font = Addon.CONFIG:GetValue( 'Font' );
-                                Frame:SetFont( 'Fonts\\'..Font.Family..'.ttf',Font.Size,Font.Flags );
-
-                                if( Frame.RefreshLayout ) then
-                                    Frame:RefreshLayout();
-                                end
-                            end
-                        end
-                    end,
-                    values = {
-                        [10] = 10,
-                        [12] = 12,
-                        [14] = 14,
-                        [16] = 16,
-                        [18] = 18,
-                    },
-                    order = Order,
-                    name = 'Font Size',
-                    desc = 'Chat Font Size',
-                    arg = 'Size',
-                };
-                Order = Order+1;
-                Settings.FontShadowColor = {
-                    type = 'color',
-                    order = Order,
-                    get = function( Info )
-                        if( Addon.DB:GetPersistence().Font.Shadow.Color ~= nil ) then
-                            local Color = Addon.DB:GetPersistence().Font.Shadow.Color;
-                            return Color.r,Color.g,Color.b,Color.a;
-                        end
-                    end,
-                    set = function( Info,R,G,B,A )
-
-                        for i = 1, 10 do
-                            local Frame = _G[ 'ChatFrame'..i ];
-                            if( Frame and Addon.DB:GetPersistence().Font.Shadow.Color ~= nil ) then
-                                Addon.DB:GetPersistence().Font.Shadow.Color = { r=R,g=G,b=B,a=A };
-
-                                local Font = Addon.CONFIG:GetValue( 'Font' );
-                                Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-                            end
-                        end
-                    end,
-                    name = 'Font Shadow Color',
-                    desc = 'Chat Font text shadow color',
-                };
-
-                Order = Order+1;
-                Settings.Font = {
-                    type = 'header',
-                    order = Order,
-                    name = 'Development',
-                };
-                Order = Order+1;
-                Settings.Debug = {
-                    type = 'toggle',
-                    order = Order,
-                    name = 'Debug',
-                    desc = 'Show any debug messages',
-                    arg = 'Debug',
-                };
-
-                return Settings;
-            end
-            local Settings = {
-                type = 'group',
-                get = function( Info )
-                    return Addon.CONFIG:GetValue( Info.arg );
-                end,
-                set = function( Info,Value )
-                    Addon.CONFIG:SetValue( Info.arg,Value );
-                end,
-                name = 'jChat Settings',
-                childGroups = 'tab',
-                args = {
-                },
-            };
-            local Order = 1;
-            Settings.args[ 'tab'..Order ] = {
-                type = 'group',
-                name = 'Custom Alerts',
-                width = 'full',
-                order = Order,
-                args = GetAlerts(),
-            };
-
-            Order = Order+1;
-            Settings.args[ 'tab'..Order ] = {
-                type = 'group',
-                name = 'Personal Messages',
-                width = 'full',
-                order = Order,
-                args = GetMessages(),
-            };
-
-            local LFGEnabled;
-            --[[if( C_LFGInfo and C_LFGInfo.IsGroupFinderEnabled ) then
-                LFGEnabled = C_LFGInfo.IsGroupFinderEnabled();
-            end]]
-            Order = Order+1;
-            Settings.args[ 'tab'..Order ] = {
-                hidden = Addon:IsRetail() or LFGEnabled,
-                type = 'group',
-                name = 'Dungeon Alerts',
-                width = 'full',
-                order = Order,
-                args = GetDungeons(),
-            };
-
-            Order = Order+1;
-            Settings.args[ 'tab'..Order ] = {
-                type = 'group',
-                name = 'Channels',
-                width = 'full',
-                order = Order,
-                args = GetChannels(),
-            };
-
-            Order = Order+1;
-            Settings.args[ 'tab'..Order ] = {
-                type = 'group',
-                name = 'General',
-                width = 'full',
-                order = Order,
-                args = GetGeneral(),
-            };
-
-            Settings.args.profiles = LibStub( 'AceDBOptions-3.0' ):GetOptionsTable( Addon.DB.db );
-
-            return Settings;
-        end
-
-        --
-        --  Create module config frames
-        --
-        --  @return void
-        Addon.CONFIG.Init = function( self )
-            -- Initialize window
-            local _, CategoryID = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( AddonName,AddonName );
-            LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( AddonName,self:GetSettings() );
-
-            SLASH_JCHAT1, SLASH_JCHAT2 = '/jc', '/jchat';
-            SlashCmdList[ string.upper( AddonName ) ] = function( Msg,EditBox )
-                if( InCombatLockdown() ) then
-                    Addon.FRAMES:Error( 'You are in combat' );return;
-                end
-                if( InterfaceOptionsFrame_OpenToCategory ) then
-                    InterfaceOptionsFrame_OpenToCategory( AddonName );
-                    InterfaceOptionsFrame_OpenToCategory( AddonName );
-                else
-                    Settings.OpenToCategory( CategoryID );
-                end
+--
+-- Set watch list
+--
+-- @param string
+--
+-- @return void
+function CONFIG:SetAlerts( Watch )
+    Watch = Library:Explode( Watch,',' );
+    if( type( Watch ) == 'table' ) then
+        DB:GetPersistence().AlertList = {};
+        for i,v in pairs( Watch ) do
+            if( string.len( v ) > 0 ) then
+                table.insert( DB:GetPersistence().AlertList,Library:Minify( v ) );
             end
         end
-
-        Addon.CONFIG.GetMessageGroups = function( self )
-            return {
-                SAY = {
-                    'SAY',
-                    'MONSTER_SAY',
-                },
-                EMOTE = {
-                    'EMOTE',
-                    'MONSTER_EMOTE',
-                    'MONSTER_BOSS_EMOTE',
-                },
-                YELL = {
-                    'YELL',
-                    'MONSTER_YELL',
-                },
-                GUILD = {
-                    'GUILD',
-                    'OFFICER',
-                },
-                WHISPER = {
-                    'WHISPER',
-                    'WHISPER_INFORM',
-                    'SMART_WHISPER',
-                    'MONSTER_BOSS_WHISPER',
-                    'MONSTER_WHISPER',
-                    'RAID_BOSS_WHISPER',
-                    'BN_WHISPER',
-                    'BN_WHISPER_INFORM',
-                    'BN_WHISPER_PLAYER_OFFLINE',
-                },
-                BN = {
-                    'BN_ALERT',
-                    'BN_BROADCAST',
-                    'BN_BROADCAST_INFORM',
-                    'BN_INLINE_TOAST_ALERT',
-                    'BN_INLINE_TOAST_BROADCAST',
-                    'BN_INLINE_TOAST_BROADCAST_INFORM',
-                    'BN_WHISPER',
-                    'BN_WHISPER_INFORM',
-                    'BN_WHISPER_PLAYER_OFFLINE',
-                },
-                PARTY = {
-                    'PARTY',
-                    'PARTY_LEADER',
-                },
-                RAID = {
-                    'RAID',
-                    'RAID_LEADER',
-                    'RAID_WARNING',
-                    'INSTANCE_CHAT',
-                    'INSTANCE_CHAT_LEADER',
-                },
-                COMBAT = {
-                    'COMBAT',
-                    'COMBAT_XP_GAIN',
-                    'COMBAT_HONOR_GAIN',
-                    'COMBAT_FACTION_CHANGE',
-                },
-                SKILL = {
-                    'SKILL',
-                },
-                LOOT = {
-                    'LOOT',
-                },
-                MONEY = {
-                    'MONEY',
-                },
-                TRADESKILLS = {
-                    'TRADESKILLS',
-                },
-                OPENING = {
-                    'OPENING',
-                },
-                PET = {
-                    'PET',
-                    'PET_INFO',
-                },
-                BATTLEGROUND = {
-                    'BG_SYSTEM_HORDE',
-                    'BG_SYSTEM_ALLIANCE',
-                    'BG_SYSTEM_NEUTRAL',
-                    'BATTLEGROUND',
-                },
-                ERRORS = {
-                    'ERRORS',
-                },
-                IGNORED = {
-                    'IGNORED',
-                },
-            };
-        end
-
-        --
-        -- Set watch list
-        --
-        -- @param string
-        --
-        -- @return void
-        Addon.CONFIG.SetAlerts = function( self,watch )
-            watch = Addon:Explode( watch,',' );
-            if( type( watch ) == 'table' ) then
-                Addon.DB:GetPersistence().AlertList = {};
-                for i,v in pairs( watch ) do
-                    if( string.len( v ) > 0 ) then
-                        table.insert( Addon.DB:GetPersistence().AlertList,Addon:Minify( v ) );
-                    end
-                end
-            else
-                Addon.DB:GetPersistence().AlertList = { Addon:Minify( watch ) };
-            end
-            --Addon:Dump( Addon.DB:GetPersistence().AlertList )
-        end
-
-        --
-        -- Get watch list
-        --
-        -- @return table
-        Addon.CONFIG.GetAlerts = function( self )
-            return Addon.DB:GetPersistence().AlertList;
-        end
-
-        --
-        -- Set ignore list
-        --
-        -- @param string
-        --
-        -- @return void
-        Addon.CONFIG.SetIgnores = function( self,ignore )
-            ignore = Addon:Explode( ignore,',' );
-            if( type( ignore ) == 'table' ) then
-                Addon.DB:GetPersistence().IgnoreList = {};
-                for i,v in pairs( ignore ) do
-                    if( string.len( v ) > 0 ) then
-                        table.insert( Addon.DB:GetPersistence().IgnoreList,Addon:Minify( v ) );
-                    end
-                end
-            else
-                Addon.DB:GetPersistence().IgnoreList = { Addon:Minify( ignore ) };
-            end
-            --Addon:Dump( Addon.DB:GetPersistence().IgnoreList )
-        end
-
-        --
-        -- Get ignore list
-        --
-        -- @return table
-        Addon.CONFIG.GetIgnores = function( self )
-            return Addon.DB:GetPersistence().IgnoreList;
-        end
-
-        --
-        -- Set alias list
-        --
-        -- @param string
-        --
-        -- @return void
-        Addon.CONFIG.SetAliasList = function( self,Alias )
-            Alias = Addon:Explode( Alias,',' );
-            if( type( Alias ) == 'table' ) then
-                Addon.DB:GetPersistence().AliasList = {};
-                for i,v in pairs( Alias ) do
-                    if( string.len( v ) > 0 ) then
-                        table.insert( Addon.DB:GetPersistence().AliasList,Addon:Minify( v ) );
-                    end
-                end
-            else
-                Addon.DB:GetPersistence().AliasList = { Addon:Minify( Alias ) };
-            end
-            --Addon:Dump( Addon.DB:GetPersistence().AliasList )
-        end
-
-        --
-        -- Get channel persistence
-        --
-        -- @param  string
-        -- @return table
-        Addon.CONFIG.GetConnectedChannel = function( self,ChannelName )
-            return Addon.CHAT:IsChannelJoined( ChannelName );
-        end
-
-        --
-        -- Set channel persistence
-        --
-        -- @param  string
-        -- @return table
-        Addon.CONFIG.SetConnectedChannel = function( self,ChannelName,ChannelId,Connected )
-            if( Connected ) then
-                return Addon.CHAT:JoinChannel( ChannelName,ChannelId );
-            else
-                return Addon.CHAT:LeaveChannel( ChannelName );
-            end
-        end
-
-        --
-        -- Get alist list
-        --
-        -- @return table
-        Addon.CONFIG.GetAliasList = function( self )
-            return Addon.DB:GetPersistence().AliasList;
-        end
-
-        self:UnregisterEvent( 'ADDON_LOADED' );
+    else
+        DB:GetPersistence().AlertList = { Library:Minify( Watch ) };
     end
-end );
+end
+
+--
+-- Get watch list
+--
+-- @return table
+function CONFIG:GetAlerts()
+    return DB:GetPersistence().AlertList;
+end
+
+--
+-- Set ignore list
+--
+-- @param string
+--
+-- @return void
+function CONFIG:SetIgnores( Ignore )
+    Ignore = Library:Explode( Ignore,',' );
+    if( type( Ignore ) == 'table' ) then
+        DB:GetPersistence().IgnoreList = {};
+        for i,v in pairs( Ignore ) do
+            if( string.len( v ) > 0 ) then
+                table.insert( DB:GetPersistence().IgnoreList,Library:Minify( v ) );
+            end
+        end
+    else
+        DB:GetPersistence().IgnoreList = { Library:Minify( Ignore ) };
+    end
+end
+
+--
+-- Get ignore list
+--
+-- @return table
+function CONFIG:GetIgnores()
+    return DB:GetPersistence().IgnoreList;
+end
+
+--
+-- Set alias list
+--
+-- @param string
+--
+-- @return void
+function CONFIG:SetAliasList( Alias )
+    Alias = Library:Explode( Alias,',' );
+    if( type( Alias ) == 'table' ) then
+        DB:GetPersistence().AliasList = {};
+        for i,v in pairs( Alias ) do
+            if( string.len( v ) > 0 ) then
+                table.insert( DB:GetPersistence().AliasList,Library:Minify( v ) );
+            end
+        end
+    else
+        DB:GetPersistence().AliasList = { Library:Minify( Alias ) };
+    end
+end
+
+--
+-- Get alist list
+--
+-- @return table
+function CONFIG.GetAliasList()
+    return DB:GetPersistence().AliasList;
+end
+
+function CONFIG:WindowOps()
+	return {
+        FirstSeparator = {
+            type = 'header',
+            order = 0,
+            name = 'FONTS',
+        },
+		FontFamily = {
+			order = 1,
+            type = 'select',
+            name = 'Font Family',
+            desc = 'Chat Font Family',
+            arg = 'Family',
+			get = function( Info )
+			    if( DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+			        return DB:GetPersistence().Font[ Info.arg ]
+			    end
+			end,
+            set = function( Info,Value )
+                for i = 1, 10 do
+                    local Frame = _G[ 'ChatFrame'..i ];
+                    if( Frame and DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                        DB:GetPersistence().Font[ Info.arg ] = Value
+
+                        local Font = DB:GetDBValue( 'Font' )
+                        if( DB.FONTS[ Font.Family ] ) then
+                            Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags )
+                        end
+
+                        if( Frame.RefreshLayout ) then
+                            Frame:RefreshLayout()
+                        end
+                    end
+                end
+            end,
+            values = {
+                skurri = 'skurri',
+                Enigmatic = 'Enigmatic',
+                ARIALN = 'ARIALN',
+                MORPHEUS = 'MORPHEUS',
+                FRIZQT__ = 'FRIZQT__',
+            },
+		},
+		FontShadow = {
+			order = 2,
+            name = 'Font Shadow Color',
+            desc = 'Chat Font text shadow color',
+            type = 'color',
+            get = function( Info )
+                if( DB:GetPersistence().Font.Shadow.Color ~= nil ) then
+                    local Color = DB:GetPersistence().Font.Shadow.Color
+                    return Color.r,Color.g,Color.b,Color.a
+                end
+            end,
+            set = function( Info,R,G,B,A )
+
+                for i = 1, 10 do
+                    local Frame = _G[ 'ChatFrame'..i ];
+                    if( Frame and DB:GetPersistence().Font.Shadow.Color ~= nil ) then
+                        DB:GetPersistence().Font.Shadow.Color = { r=R,g=G,b=B,a=A }
+
+                        local Font = DB:GetDBValue( 'Font' )
+                        Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a )
+                    end
+                end
+            end,
+		},
+		FontSize = {
+			order = 3,
+            name = 'Font Size',
+            desc = 'Chat Font Size',
+            arg = 'Size',
+            type = 'select',
+			get = function( Info )
+			    if( DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+			        return DB:GetPersistence().Font[ Info.arg ]
+			    end
+			end,
+            set = function( Info,Value )
+                for i = 1, 10 do
+                    local Frame = _G[ 'ChatFrame'..i ];
+                    if( Frame and DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
+                        DB:GetPersistence().Font[ Info.arg ] = Value
+
+                        local Font = DB:GetDBValue( 'Font' )
+                        if( DB.FONTS[ Font.Family ] ) then
+                            Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags )
+                        end
+
+                        if( Frame.RefreshLayout ) then
+                            Frame:RefreshLayout()
+                        end
+                    end
+                end
+            end,
+            values = {
+                [10] = 10,
+                [12] = 12,
+                [14] = 14,
+                [16] = 16,
+                [18] = 18,
+            },
+		},
+        SecondSeparator = {
+            type = 'header',
+            order = 4,
+            name = 'TOGGLES',
+        },
+    	ScrollBack = {
+			order = 5,
+	        type = 'toggle',
+	        name = 'Scroll Back',
+	        desc = 'Extend chat history to 10,000 lines',
+	        arg = 'ScrollBack',
+	        set = function( Info,Value )
+	            for i = 1, 10 do
+	                local Frame = _G[ 'ChatFrame'..i ]
+	                if( Frame ) then
+		                if( Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		                    DB:GetPersistence()[ Info.arg ] = Value
+
+		                    Frame:SetMaxLines( 10000 )
+		                elseif( not Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		                    DB:GetPersistence()[ Info.arg ] = Value
+
+		                    Frame:SetMaxLines( 128 )
+		                end
+		            end
+	            end
+	        end,
+	    },
+    	FadeOut = {
+			order = 6,
+	        type = 'toggle',
+	        name = 'Fade Out',
+	        desc = 'Enable/disable chat fading',
+	        arg = 'FadeOut',
+	        set = function( Info,Value )
+	            for i = 1, 10 do
+	                local Frame = _G[ 'ChatFrame'..i ];
+	                if( Frame ) then
+		                if( Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		                    DB:GetPersistence()[ Info.arg ] = Value
+
+		                    Frame:SetFading( true );
+		                elseif( not Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		                    DB:GetPersistence()[ Info.arg ] = Value
+
+		                    Frame:SetFading( false );
+		                end
+		            end
+	            end
+	        end,
+	    },
+	}
+end
+
+function CONFIG:FilterOps()
+	return {
+        FirstSeparator = {
+            type = 'header',
+            order = 0,
+            name = 'CUSTOM',
+        },
+		CustomAlerts = {
+			order = 1,
+	        type = 'input',
+	        multiline = true,
+	        get = function( Info )
+	            return Library:Implode( DB:GetAlerts(),',' )
+	        end,
+	        set = function( Info,Value )
+	            self:SetAlerts( Value );
+	        end,
+	        name = 'Alert List',
+	        desc = 'Words or phrases to be alerted on when they are mentioned in chat. Seperate individual things to alert on with a comma: e.g. healer,spriest,sfk,really cool',
+	        arg = 'AlertList',
+	        width = 'full',
+	    },
+		CustomIgnores = {
+			order = 2,
+	        type = 'input',
+	        multiline = true,
+	        get = function( Info )
+	            return Library:Implode( DB:GetIgnores(),',' )
+	        end,
+	        set = function( Info,Value )
+	            self:SetIgnores( Value )
+	        end,
+	        name = 'Ignore List',
+	        desc = 'Words or phrases which should be omitted in chat. Seperate individual things to ignore with a comma: e.g. boost,spam,anidiot,absolutely terrible',
+	        arg = 'IgnoreList',
+	        width = 'full',
+	    },
+	    AlertColors = {
+            type = 'color',
+            order = 3,
+            get = function( Info )
+                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    return unpack( DB:GetPersistence()[ Info.arg ] )
+                end
+            end,
+            set = function( Info,R,G,B,A )
+                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = { R,G,B,A }
+                end
+            end,
+            name = 'Alert Color',
+            desc = 'Set the color of Alerts chat',
+            arg = 'AlertColor',
+            --hasAlpha = true,
+        },
+        SecondSeparator = {
+            type = 'header',
+            order = 4,
+            name = 'PERSONAL',
+        },
+        AlertMention = {
+            type = 'toggle',
+            order = 5,
+            name = 'Personal Mention Alert',
+            desc = 'Enable/disable alerting if anyone mentions your name. Note that mentions always produce an alert sound and have the whisper color',
+            arg = 'MentionAlert',
+        },
+        AliasList = {
+            type = 'input',
+            order = 6,
+            multiline = true,
+            get = function( Info )
+                return Library:Implode( self:GetAliasList(),',' );
+            end,
+            set = function( Info,Value )
+                self:SetAliasList( Value );
+            end,
+            name = 'Alert Alias List',
+            desc = 'Comma seperated list of aliases for your character name, to be used in mention alerts',
+            arg = 'Aliases',
+            width = 'normal',
+            multiline = false,
+        },
+	}
+end
+
+function CONFIG:FormatOps()
+	local Order = 1
+	local ChannelPrefs = {
+        FirstSeparator = {
+            type = 'header',
+            order = 0,
+            name = 'COLORS',
+        },
+	}
+	for _,Channel in pairs( self:GetChannels() ) do 
+		if( Channel.Name ) then
+			Order = Order+1
+            ChannelPrefs[ Channel.Name..'Color' ] = {
+                type = 'color',
+                order = Order,
+                get = function( Info )
+                    if( DB:GetPersistence().Channels[ Info.arg ] and not DB:GetPersistence().Channels[ Info.arg ].Color ) then
+                        DB:GetPersistence().Channels[ Info.arg ].Color = CHATFRAME:GetBaseColor()
+                    end
+                    return unpack( DB:GetPersistence().Channels[ Info.arg ].Color )
+                end,
+                set = function( Info,R,G,B,A )
+                    local InternalCall = true;
+                    if( DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
+
+                        -- Change color
+                        DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A }
+
+                        -- Apply to Chat
+                        CHATFRAME:ApplyChatColors()
+                        
+                    end
+                end,
+                name = '[['..Channel.Id..']'..Channel.Name..']',
+                desc = 'Set the color of '..Channel.Name..' chat',
+                arg = Channel.Name,
+                --hasAlpha = true,
+            }
+		end
+	end
+
+	Order = Order+1
+    ChannelPrefs.SecondSeparator = {
+        type = 'header',
+        order = Order,
+        name = 'TIMESTAMPS',
+    }
+	Order = Order+1
+	ChannelPrefs.TimeStamps = {
+        type = 'select',
+        values = {
+            none = 'none',
+            hour_min_12 = 'hour_min_12',
+            hour_min_ext = 'hour_min_ext',
+            hour_min_sec_12_ext = 'hour_min_sec_12_ext',
+            hour_min_24 = 'hour_min_24',
+            hour_min_sec_24 = 'hour_min_sec_24',
+        },
+        order = Order,
+        name = 'Timestamps',
+        desc = 'Timestamp format',
+        arg = 'showTimestamps',
+    }
+
+	Order = Order+1
+	ChannelPrefs.TimeColor = {
+        type = 'color',
+        order = Order,
+        get = function( Info )
+            if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                return unpack( DB:GetPersistence()[ Info.arg ] );
+            end
+        end,
+        set = function( Info,R,G,B,A )
+            if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
+            end
+        end,
+        name = 'Timestamps',
+        desc = 'Timestamp Color',
+        arg = 'TimeColor',
+        --hasAlpha = true,
+    }
+
+	Order = Order+1
+    ChannelPrefs.ThirdSeparator = {
+        type = 'header',
+        order = Order,
+        name = 'TOGGLES',
+    }
+
+	Order = Order+1
+	ChannelPrefs.ShortNames = {
+        type = 'toggle',
+        order = Order,
+        name = 'Short Channel Names',
+        desc = 'For channels with long names, shorten them with abbreviation',
+        arg = 'ShortChannelNames',
+	}
+
+	Order = Order+1
+	ChannelPrefs.Links = {
+        type = 'toggle',
+        order = Order,
+        name = 'Links',
+        desc = 'Automatically convert links to clickable',
+        arg = 'LinksEnabled',
+	}
+
+	Order = Order+1
+	ChannelPrefs.ClassColors = {
+        type = 'toggle',
+        order = Order,
+		get = function( Info )
+		    if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		        return DB:GetPersistence()[ Info.arg ]
+		    end
+		end,
+        set = function( Info,Value )
+        	if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+            	DB:GetPersistence()[ Info.arg ] = Value
+
+	            for i,ChannelData in pairs( CHATFRAME:GetChannels() ) do
+	                if( ChannelData.Id ) then
+	                    ToggleChatColorNamesByClassGroup( Value,tostring( 'CHANNEL'..ChannelData.Id ) );
+	                end
+	            end
+            end
+        end,
+        name = 'Class Colors',
+        desc = 'Enable/Disable Chat Class Colors',
+        arg = 'ClassColors',
+	}
+	return ChannelPrefs
+end
+
+function CONFIG:QuestOps()
+	return {
+        FirstSeparator = {
+            type = 'header',
+            order = 0,
+            name = 'QUESTS',
+        },
+		Quests = {
+	        type = 'toggle',
+	        order = 1,
+	        name = 'Quests',
+	        desc = 'Enable/disable alerting if anyone mentions a quest you are on',
+	        arg = 'QuestAlert',
+		}
+	}
+end
+
+function CONFIG:OpenConfig( Input )
+    LibStub( 'AceConfigDialog-3.0' ):Open( NAME )
+end
+
+function CONFIG:Refresh()
+	local Options = {
+		get = function( Info )
+		    if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		        return DB:GetPersistence()[ Info.arg ]
+		    end
+		end,
+        set = function( Info,Value )
+        	if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+            	DB:GetPersistence()[ Info.arg ] = Value
+            end
+        end,
+        --name = 'jChat Settings',
+        childGroups = 'tree',
+		type = 'group',
+		args = {
+			WindowOptions = {
+				order = 1,
+				name = 'Window Options',
+				type = 'group',
+				width = 'full',
+				args = self:WindowOps()
+			},
+			FilterOptions = {
+				order = 2,
+				name = 'Filter Options',
+				type = 'group',
+				width = 'full',
+				args = self:FilterOps()
+			},
+			FormattingOptions = {
+				order = 3,
+				name = 'Format Options',
+				type = 'group',
+				width = 'full',
+				args = self:FormatOps()
+			},
+			QuestOptions = {
+				order = 4,
+				name = 'Quest Options',
+				type = 'group',
+				width = 'full',
+				args = self:QuestOps()
+			},
+		},
+	};
+
+    -- Register our options table with AceConfig
+    LibStub( 'AceConfigRegistry-3.0' ):RegisterOptionsTable( NAME,Options )
+    self.optionsFrame = LibStub( 'AceConfigDialog-3.0' ):AddToBlizOptions( NAME,NAME )
+    
+    -- Slash command to open the standalone AceConfig Dialog GUI directly
+    self:RegisterChatCommand( 'jc','OpenConfig' )
+    self:RegisterChatCommand( 'jchat','OpenConfig' )
+end
+
+function CONFIG:OnEnable()
+	self:Refresh()
+end

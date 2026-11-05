@@ -1,120 +1,76 @@
-local _, Addon = ...;
+local _,Library = ...
 
-Addon.QUESTS = CreateFrame( 'Frame' );
-Addon.QUESTS:RegisterEvent( 'ADDON_LOADED' );
-Addon.QUESTS:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName == 'jChat' ) then
-        
-        --
-        --  Accept Quest
-        --
-        --  @param  list
-        --  @return void
-        Addon.QUESTS.AcceptQuest = function( self,... )
-            local QuestTitle = Addon:Minify( C_QuestLog.GetTitleForQuestID( select( 1,... ) ) );
-            if( QuestTitle ) then
-                self.ActiveQuests[ QuestTitle ] = QuestTitle;
-            end
-        end
+local ADDON = LibStub( 'AceAddon-3.0' ):GetAddon( 'jChat' )
+local DB = ADDON:GetModule( 'database' )
+local QUESTS = ADDON:NewModule( 'quests','AceEvent-3.0' )
 
-        --
-        --  Complete Quest
-        --
-        --  @param  list
-        --  @return void
-        Addon.QUESTS.CompleteQuest = function( self,... )
-            if( self.ActiveQuests[ QuestTitle ] ) then
-                local QuestTitle;
-                if( C_QuestLog and C_QuestLog.GetTitleForQuestID ) then
-                    QuestTitle = Addon:Minify( C_QuestLog.GetTitleForQuestID( ... ) )
-                else
-                    QuestTitle = Addon:Minify( C_QuestLog.GetQuestInfo( ... ) )
-                end
-                self.ActiveQuests[ QuestTitle ] = nil;
-            end
-        end
+local C_QuestLog = C_QuestLog
+local GetQuestLogTitle = GetQuestLogTitle
 
-        --
-        --  Rebuild Quest Watch
-        --
-        --  @return void
-        Addon.QUESTS.RebuildQuests = function( self )
-            self.ActiveQuests = {};
-            local NumEntries,NumQuests;
-            if( C_QuestLog and C_QuestLog.GetNumQuestLogEntries ) then
-                NumEntries,NumQuests = C_QuestLog.GetNumQuestLogEntries();
-            else
-                NumEntries,NumQuests = GetNumQuestLogEntries();
-            end
-            local QuestTitle;
-            for i=1, NumEntries do
-                if( C_QuestLog and C_QuestLog.GetTitleForQuestID ) then
-                    QuestTitle = C_QuestLog.GetTitleForQuestID( i );
-                else
-                    QuestTitle,_,_,IsHeader = GetQuestLogTitle( i );
-                end
-                if( QuestTitle ) then
-                    self.ActiveQuests[ Addon:Minify( QuestTitle ) ] = Addon:Minify( QuestTitle );
-                end
-            end
-        end
-
-        --
-        --  Enable Quest Events
-        --
-        --  @return void
-        Addon.QUESTS.EnableQuestEvents = function( self )
-            self.QuestEvents = self.QuestEvents or CreateFrame( 'Frame' );
-            self.QuestEvents:RegisterEvent( 'QUEST_ACCEPTED' );
-            self.QuestEvents:RegisterEvent( 'QUEST_TURNED_IN' );
-            self.QuestEvents:SetScript( 'OnEvent',function( self,event,... )
-                if( event == 'QUEST_ACCEPTED' ) then
-                    Addon.QUESTS:AcceptQuest( ...  );
-                elseif( event == 'QUEST_TURNED_IN' ) then
-                    Addon.QUESTS:RebuildQuests();
-                end
-            end );
-        end
-
-        --
-        --  Disable Quest Events
-        --
-        --  @return void
-        Addon.QUESTS.DisableQuestEvents = function( self )
-            self.ActiveQuests = {};
-            self.QuestEvents = self.QuestEvents or CreateFrame( 'Frame' );
-            self.QuestEvents:UnregisterEvent( 'QUEST_ACCEPTED' );
-            self.QuestEvents:UnregisterEvent( 'QUEST_TURNED_IN' );
-        end
-
-        --
-        --  Questie Support
-        --
-        --  @return string
-        Addon.QUESTS.QuestieFilter = function( self,ChatFrame,... )
-            local QuestieText;
-            if( QuestieLoader ) then
-                QuestieLoader:ImportModule( 'ChatFilter' );
-
-                _,QuestieText = QuestieFilter.Filter( ChatFrame,_,... );
-            end
-            return QuestieText;
-        end
-
-        Addon.QUESTS.Init = function( self )
-            if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
-                self:EnableQuestEvents();
-            else
-                self:DisableQuestEvents();
-            end
-            self:RebuildQuests();
-            --[[
-            Addon:Dump( {
-                ActiveQuests = self.ActiveQuests,
-            } );
-            ]]
-        end
-        
-        self:UnregisterEvent( 'ADDON_LOADED' );
+--
+--  Rebuild Quest Watch
+--
+--  @return void
+function QUESTS:RebuildQuests()
+    self.ActiveQuests = {}
+    local NumEntries,NumQuests
+    if( C_QuestLog and C_QuestLog.GetNumQuestLogEntries ) then
+        NumEntries,NumQuests = C_QuestLog.GetNumQuestLogEntries()
+    else
+        NumEntries,NumQuests = GetNumQuestLogEntries()
     end
-end );
+    local QuestTitle
+    for i=1, NumEntries do
+        if( C_QuestLog and C_QuestLog.GetTitleForQuestID ) then
+            QuestTitle = C_QuestLog.GetTitleForQuestID( i )
+        else
+            QuestTitle,_,_,IsHeader = GetQuestLogTitle( i )
+        end
+        if( QuestTitle ) then
+            self.ActiveQuests[ Library:Minify( QuestTitle ) ] = Library:Minify( QuestTitle )
+        end
+    end
+end
+
+--
+--  Accept Quest
+--
+--  @param  list
+--  @return void
+function QUESTS:QUEST_ACCEPTED( Event,... )
+	local QuestId = tonumber( select( 1,... ) )
+	if( QuestId and QuestId > 0 ) then
+	    local QuestTitle = Library:Minify( C_QuestLog.GetTitleForQuestID( QuestId ) )
+	    if( QuestTitle ) then
+	        self.ActiveQuests[ QuestTitle ] = QuestTitle
+	    end
+	end
+end
+
+--
+--  Disable Quest Events
+--
+--  @return void
+function QUESTS:QUEST_TURNED_IN( Event,... )
+    self:UnregisterEvent( 'QUEST_ACCEPTED' )
+    self:UnregisterEvent( 'QUEST_TURNED_IN' )
+    self:RebuildQuests()
+end
+
+--
+--  Enable Quest Events
+--
+--  @return void
+function QUESTS:RegisterCallbacks()
+	self:RegisterEvent( 'QUEST_ACCEPTED' )
+	self:RegisterEvent( 'QUEST_TURNED_IN' )
+end
+
+function QUESTS:OnEnable()
+    if( DB:GetDBValue( 'QuestAlert' ) ) then
+        self:RegisterCallbacks()
+    else
+        self:DisableQuestEvents()
+    end
+    self:RebuildQuests()
+end

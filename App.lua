@@ -1,20 +1,24 @@
-local _, Addon = ...;
-local strsub = string.sub;
-local issecretvalue = issecretvalue or function()end;
+local _,Library = ...
 
-local C_ChatInfo = C_ChatInfo;
-local C_PartyInfo = C_PartyInfo;
-local TimeUtil = TimeUtil;
+local ADDON = LibStub( 'AceAddon-3.0' ):GetAddon( 'jChat' )
+local CHATFRAME = ADDON:GetModule( 'chatframe' )
+local QUESTS = ADDON:GetModule( 'quests' )
+local DB = ADDON:GetModule( 'database' )
+local APP = ADDON:NewModule( 'app' )
 
-local ConvertToRaid = ConvertToRaid;
-local WrapTextInColorCode = WrapTextInColorCode;
-local InCombatLockdown = InCombatLockdown;
-local CreateColor = CreateColor;
-local UnitName = UnitName;
+local CreateColor = CreateColor
+local TimeUtil = TimeUtil
+local BetterDate = BetterDate
+local ChatTypeInfo = ChatTypeInfo
+local C_ChatInfo = C_ChatInfo
 
-Addon.APP = CreateFrame( 'Frame' );
+function APP:CanUnPackArgs( Value )
+    if( Value and type( Value ) == 'table' ) then
+        return true
+    end
+end
 
-Addon.APP.PrependTimeStamp = function( self,MessageText )
+function APP:PrependTimeStamp( MessageText )
     -- Timestamp Formats
     local PossibleTimestampFmts = {
         none = 'none',
@@ -23,69 +27,63 @@ Addon.APP.PrependTimeStamp = function( self,MessageText )
         hour_min_sec_12_ext = '%I:%M:%S %p ',
         hour_min_24 = '%H:%M ',
         hour_min_sec_24 = '%H:%M:%S ',
-    };
+    }
 
     -- Timestamp Format
-    local SelectedKey = Addon.CONFIG:GetValue( 'showTimestamps' ); 
-    local FmtString = PossibleTimestampFmts[ SelectedKey ] or 'none';
+    local SelectedKey = DB:GetDBValue( 'showTimestamps' )
+    local FmtString = PossibleTimestampFmts[ SelectedKey ] or 'none'
 
     -- Timestamp Color
-    local r, g, b = unpack( Addon.CONFIG:GetValue( 'TimeColor' ) );
-    local TimeStampColor = CreateColor(r, g, b, 1);
+    local r, g, b = unpack( DB:GetDBValue( 'TimeColor' ) )
+    local TimeStampColor = CreateColor(r, g, b, 1)
     
     -- Prepend Timestamp
     if( FmtString ~= 'none' ) then
-        local RawTime;
+        local RawTime
         if( TimeUtil and TimeUtil.BetterDate ) then
-            RawTime = TimeUtil.BetterDate( FmtString,time() );
+            RawTime = TimeUtil.BetterDate( FmtString,time() )
         else
-            RawTime = BetterDate( FmtString,time() );
+            RawTime = BetterDate( FmtString,time() )
         end
-        local ColoredTime = TimeStampColor:WrapTextInColorCode( RawTime );
+        local ColoredTime = TimeStampColor:WrapTextInColorCode( RawTime )
         MessageText = ColoredTime .. MessageText
     end
 
-    return MessageText;
+    return MessageText
 end
 
-Addon.APP.CanUnPackArgs = function( self,Value )
-    if( Value and type( Value ) == 'table' ) then
-        return true;
-    end
-end
+function APP.AddMessage( self,MessageText,R,G,B,TypeId,... )
+    local MyName = UnitName( 'player' )
+    local ChatType = select( 3,... ) or ''
+    local WhisperTypeInfo = ChatTypeInfo['WHISPER']
 
-Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
-    local MyName = UnitName( 'player' );
-    local ChatType = select( 3,... ) or '';
-    local WhisperTypeInfo = ChatTypeInfo['WHISPER'];
-
-    local CannotProcess;
+    local CannotProcess
     if( issecretvalue( MessageText ) ) then
-        CannotProcess = true;
+        CannotProcess = true
     end
     if( InCombatLockdown() ) then
-        CannotProcess = true;
+        CannotProcess = true
     end
     if( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() ) then
-        CannotProcess = true;
+        CannotProcess = true
     end
 
     -- Stop Early if Cannot Unpack
-    if( not Addon.APP:CanUnPackArgs( select( 4,... ) ) ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+    if( not APP:CanUnPackArgs( select( 4,... ) ) ) then
+        if( CHATFRAME.Hooks[self] ) then
+            return CHATFRAME.Hooks[self]( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
     -- Stop Early for Combat
     if( CannotProcess ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        if( CHATFRAME.Hooks[self] ) then
+            return CHATFRAME.Hooks[self]( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
     -- Not sure why this is a table... lol
-    local TableValues = select( 4,... );
+    local TableValues = select( 4,... )
     local TextToFilter,SenderName,
         LangHeader,
         ChannelNameId,
@@ -101,234 +99,204 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         IsMobile,
         _,
         LBox,
-    IconReplacement = unpack( TableValues );
+    IconReplacement = unpack( TableValues )
 
     -- Stop Early for Invalid Sender
     if( not SenderName or SenderName == nil or SenderName == '' ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        if( CHATFRAME.Hooks[self] ) then
+            return CHATFRAME.Hooks[self]( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
     -- Stop Early for Secret Sender
     if( issecretvalue( SenderName ) ) then
-        if( Addon.CHAT.Hooks[self] ) then
-            return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+        if( CHATFRAME.Hooks[self] ) then
+            return CHATFRAME.Hooks[self]( self,MessageText,R,G,B,TypeId,... )
         end
     end
 
     -- Retrieve Channel Permission Value
-    local Permission;
+    local Permission
     if( IntChannelId > 0 ) then
-        Permission = Addon.CONFIG:GetValue( 'Channels' )[ ChannelBaseName ] or false;
+        Permission = DB:GetDBValue( 'Channels' )[ ChannelBaseName ] or false
     end
     if( not Permission ) then
-        if( Addon:Minify( ChannelBaseName ):find( 'trade' ) ) then
-            Permission = Addon.CONFIG:GetValue( 'Channels' )[ 'Trade' ];
+        if( Library:Minify( ChannelBaseName ):find( 'trade' ) ) then
+            Permission = DB:GetDBValue( 'Channels' )[ 'Trade' ]
         end
     end
 
     -- Ignored Message
-    local Ignored;
-    local IgnoredMessages = Addon.CONFIG:GetIgnores();
+    local Ignored
+    local IgnoredMessages = DB:GetIgnores()
     if( #IgnoredMessages > 0 ) then
         for _,IgnoredMessage in pairs( IgnoredMessages ) do
-            if( Addon:Minify( TextToFilter ):find( Addon:Minify( IgnoredMessage ) ) ) then
-                if( not Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
-                    Ignored = true;
+            if( Library:Minify( TextToFilter ):find( Library:Minify( IgnoredMessage ) ) ) then
+                if( not Library:Minify( SenderName ):find( Library:Minify( MyName ) ) ) then
+                    Ignored = true
                 end
             end
         end
     end
     if( Permission and Permission.Allowed == false ) then
-        Ignored = true;
+        Ignored = true
     end
 
     -- Watch Check
     local function GetWatched()
-        return Watched;
+        return Watched
     end
     local function SetWatched( Word )
-        Watched = Word;
+        Watched = Word
     end
-    local Watched,Mentioned = false,false;
-    local WatchedMessages = Addon.CONFIG:GetAlerts();
+    local Watched,Mentioned = false,false
+    local WatchedMessages = DB:GetAlerts()
     if( #WatchedMessages > 0 ) then
         for _,WatchedMessage in pairs( WatchedMessages ) do
-            if( Addon:Minify( TextToFilter ):find( Addon:Minify( WatchedMessage ) ) ) then
-                Watched = '|Alert:'..WatchedMessage;
-            end
-        end
-    end
-    if( Addon.CONFIG:GetValue( 'QuestAlert' ) ) then
-        for _,ActiveQuest in pairs( Addon.QUESTS.ActiveQuests ) do
-            if( Addon:Minify( TextToFilter ):find( ActiveQuest ) ) then
-                Watched = '|Quest:'..ActiveQuest;
+            if( Library:Minify( TextToFilter ):find( Library:Minify( WatchedMessage ) ) ) then
+                Watched = '|Alert:'..WatchedMessage
             end
         end
     end
 
-    -- Queue Check
-    local Dungeons = Addon.DUNGEONS:GetDungeonsF();
-    local DungeonQueue = Addon.DB:GetPersistence().DungeonQueue or {};
-    for ABBREV,IsQueued in pairs( DungeonQueue ) do
-        if( IsQueued ) then
-            for _,Abbrev in pairs( Dungeons[ ABBREV ].Abbrevs ) do
-                if( Addon:Minify( TextToFilter ):find( Addon:Minify( Abbrev ) ) ) then
-                    Watched = '|Dungeon:'..ABBREV..'|Abbrev:'..Abbrev;
-                end
-            end
-            if( Addon:Minify( TextToFilter ):find( Addon:Minify( ABBREV ) ) ) then
-                Watched = '|Dungeon:'..ABBREV;
+    if( DB:GetDBValue( 'QuestAlert' ) ) then
+        for _,ActiveQuest in pairs( QUESTS.ActiveQuests ) do
+            if( Library:Minify( TextToFilter ):find( ActiveQuest ) ) then
+                Watched = '|Quest:'..ActiveQuest
             end
         end
     end
-    local Raids = Addon.DUNGEONS:GetRaidsF();
-    local RaidQueue = Addon.DB:GetPersistence().RaidQueue or {};
-    for ABBREV,IsQueued in pairs( RaidQueue ) do
-        if( IsQueued ) then
-            for _,Abbrev in pairs( Raids[ ABBREV ].Abbrevs ) do
-                if( Addon:Minify( TextToFilter ):find( Addon:Minify( Abbrev ) ) ) then
-                    Watched = '|Raid:'..ABBREV..'|Abbrev:'..Abbrev;
-                end
-            end
-            if( Addon:Minify( TextToFilter ):find( Addon:Minify( ABBREV ) ) ) then
-                Watched = '|Raid:'..ABBREV;
-            end
-        end
-    end
-    SetWatched( Watched );
 
     -- Mention Check
     local function GetMentioned()
-        return Mentioned;
+        return Mentioned
     end
     local function SetMentioned( Word )
-        Mentioned = Word;
+        Mentioned = Word
     end
-    if( Addon.CONFIG:GetValue( 'MentionAlert' ) ) then
-        if( Addon:Minify( TextToFilter ):find( Addon:Minify( MyName ) ) ) then
-            Mentioned = '|Mentioned:'..MyName;
+    if( DB:GetDBValue( 'MentionAlert' ) ) then
+        if( Library:Minify( TextToFilter ):find( Library:Minify( MyName ) ) ) then
+            Mentioned = '|Mentioned:'..MyName
         end
     end
-    local AliasList = Addon.CONFIG:GetAliasList();
+    local AliasList = DB:GetAliasList()
     if( #AliasList > 0 ) then
         for _,Alias in pairs( AliasList ) do
-            if( Addon:Minify( TextToFilter ):find( Addon:Minify( Alias ) ) ) then
-                Mentioned = '|Mentioned:'..Alias;
+            if( Library:Minify( TextToFilter ):find( Library:Minify( Alias ) ) ) then
+                Mentioned = '|Mentioned:'..Alias
             end
         end
     end
-    SetMentioned( Mentioned );
+    SetMentioned( Mentioned )
 
-    local Mentioned = GetMentioned();
-    local Watched = GetWatched();
+    local Mentioned = GetMentioned()
+    local Watched = GetWatched()
 
     -- Override for Monitored Messages
     if( Watched or Mentioned ) then
-        if( Addon.CONFIG:GetValue( 'BypassTypes' ) ) then
-            Ignored = false;
+        if( DB:GetDBValue( 'BypassTypes' ) ) then
+            Ignored = false
         end
     end
 
     -- Ignored
     if( Ignored ) then
-        return true;
+        return true
     end
 
     -- URL Copy
     local function GetURLPatterns()
         return {
             { '[a-z]*://[^ >,;]*','%s' },
-        };
+        }
     end
-    if( Addon.CONFIG:GetValue( 'LinksEnabled' ) ) then
-        local Color = 'ffffff';
-        local ALink = '|cff'..Color..'|Haddon:jChat:url|h[>%1$s<]|h|r';
+    if( DB:GetDBValue( 'LinksEnabled' ) ) then
+        local Color = 'ffffff'
+        local ALink = '|cff'..Color..'|Haddon:jChat:url|h[>%1$s<]|h|r'
         if( strlen( TextToFilter ) > 7 ) then
-            local Patterns = GetURLPatterns();
+            local Patterns = GetURLPatterns()
             for i = 1, #Patterns do
-                local v = Patterns[i];
+                local v = Patterns[i]
                 MessageText = gsub( MessageText,v[1],function( str )
-                    return format( ALink,str );
-                end );
+                    return format( ALink,str )
+                end )
             end
         end
     end
 
     -- Invite Check
-    if( ChatType:find( 'WHISPER' ) and Addon.CONFIG:GetValue( 'AutoInvite' ) ) then
-        if( Addon:Minify( TextToFilter ) == 'inv' ) then
+    if( ChatType:find( 'WHISPER' ) and DB:GetDBValue( 'AutoInvite' ) ) then
+        if( Library:Minify( TextToFilter ) == 'inv' ) then
             if( GetNumGroupMembers and GetNumGroupMembers() > 4 ) then
                 if( ConvertToRaid ) then
-                    ConvertToRaid();
+                    ConvertToRaid()
                 elseif( C_PartyInfo and C_PartyInfo.ConvertToRaid ) then
-                    C_PartyInfo:ConvertToRaid();
+                    C_PartyInfo:ConvertToRaid()
                 end
             end
-            InviteUnit( SenderName );
+            InviteUnit( SenderName )
         end
     end
 
     -- Format Timestamp
-    MessageText = Addon.APP:PrependTimeStamp( MessageText );
+    MessageText = APP:PrependTimeStamp( MessageText )
 
     -- Channel Colors
-    local HighLightColor = {};
-    local DBChannels = Addon.DB:GetPersistence().Channels;
+    local HighLightColor = {}
+    local DBChannels = DB:GetPersistence().Channels
     if( tonumber( IntChannelId ) > 0 ) then
         if( DBChannels[ ChannelBaseName ] and DBChannels[ ChannelBaseName ].Color ) then
-            HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ ChannelBaseName ].Color );
+            HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DBChannels[ ChannelBaseName ].Color )
             MessageText = CreateColor( HighLightColor.r, 
                 HighLightColor.g, 
                 HighLightColor.b, 
                 HighLightColor.a 
-            ):WrapTextInColorCode( MessageText );
+            ):WrapTextInColorCode( MessageText )
         end
     end
 
     -- Sender is Me
-    if( Addon:Minify( SenderName ):find( Addon:Minify( MyName ) ) ) then
+    if( Library:Minify( SenderName ):find( Library:Minify( MyName ) ) ) then
         if( ( Mentioned or Watched ) and not ChannelBaseName:find( 'jlelz' ) ) then
-            if( Mentioned ) then Mentioned = false; end;
-            if( Watched ) then Watched = false; end;
+            if( Mentioned ) then Mentioned = false end
+            if( Watched ) then Watched = false end
         end
     end
 
     -- Don't Alert for Whisper
-    if( Mentioned and ChatType:find( 'WHISPER' ) ) then Mentioned = false; end;
-    if( Watched and ChatType:find( 'WHISPER' ) ) then Watched = false; end;
+    if( Mentioned and ChatType:find( 'WHISPER' ) ) then Mentioned = false end
+    if( Watched and ChatType:find( 'WHISPER' ) ) then Watched = false end
 
     -- Highlight Colors
     if( Watched ) then
-        HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( Addon.CONFIG:GetValue( 'AlertColor' ) );
+        HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = unpack( DB:GetDBValue( 'AlertColor' ) )
     end
     if( Mentioned ) then
         if( WhisperTypeInfo and WhisperTypeInfo.r ) then
-            HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = WhisperTypeInfo.r,WhisperTypeInfo.g,WhisperTypeInfo.b,WhisperTypeInfo.a;
+            HighLightColor.r,HighLightColor.g,HighLightColor.b,HighLightColor.a = WhisperTypeInfo.r,WhisperTypeInfo.g,WhisperTypeInfo.b,WhisperTypeInfo.a
         end
     end
 
     -- Watched
     if( Watched ) then
         MessageText = MessageText
-            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Watched ) );
+            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Watched ) )
     end
 
     -- Mentioned
     if( Mentioned ) then
         MessageText = MessageText
-            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Mentioned ) );
+            ..CreateColor( HighLightColor.r, HighLightColor.g, HighLightColor.b, HighLightColor.a ):WrapTextInColorCode( tostring( Mentioned ) )
     end
 
     -- Audible Alert
     if( Watched or Mentioned ) then
-        PlaySound( SOUNDKIT.TELL_MESSAGE,Addon.CONFIG:GetValue( 'AlertChannel' ) );
+        PlaySound( SOUNDKIT.TELL_MESSAGE,DB:GetDBValue( 'AlertChannel' ) )
     end
 
     --[[
-    local Args = { ... };
-    local StringArgs = '';
+    local Args = { ... }
+    local StringArgs = ''
     for k, v in pairs(Args) do
         if( type( v ) == 'table' ) then
             for i,m in pairs( v ) do
@@ -337,48 +305,40 @@ Addon.APP.AddMessage = function( self,MessageText,R,G,B,TypeId,... )
         end
         StringArgs = StringArgs .. k .. " = " .. tostring(v) .. ", "
     end
-    MessageText = StringArgs .. MessageText;
+    MessageText = StringArgs .. MessageText
     ]]
-    if( Addon.CONFIG:GetValue( 'ShortChannelNames' ) ) then
+    if( DB:GetDBValue( 'ShortChannelNames' ) ) then
         if( ChannelBaseName and IntChannelId > 0 ) then
             -- This looks for string combinations like '[1. General - Orgrimmar]' or '|h[1. General]|h'
             if ChannelBaseName:find("General") then
-                MessageText = MessageText:gsub( "General%s?-%s?[^%]]+",'GEN' );
+                MessageText = MessageText:gsub( "General%s?-%s?[^%]]+",'GEN' )
             elseif ChannelBaseName:find("LocalDefense") then
-                MessageText = MessageText:gsub( "LocalDefense",'LDEF' );
+                MessageText = MessageText:gsub( "LocalDefense",'LDEF' )
             elseif ChannelBaseName:find("WorldDefense") then
-                MessageText = MessageText:gsub( "WorldDefense",'WDEF' );
+                MessageText = MessageText:gsub( "WorldDefense",'WDEF' )
             elseif ChannelBaseName:find("LookingForGroup") then
-                MessageText = MessageText:gsub( "LookingForGroup",'LFG' );
+                MessageText = MessageText:gsub( "LookingForGroup",'LFG' )
             elseif ChannelBaseName:find("Trade") then
-                MessageText = MessageText:gsub( "Trade%s?-%s?[^%]]+",'TRADE' );
+                MessageText = MessageText:gsub( "Trade%s?-%s?[^%]]+",'TRADE' )
             end
         end
     end
 
     -- Default Handler
-    if( Addon.CHAT.Hooks[self] ) then
-        return Addon.CHAT.Hooks[self]( self,MessageText,R,G,B,TypeId,... );
+    if( CHATFRAME.Hooks[self] ) then
+        return CHATFRAME.Hooks[self]( self,MessageText,R,G,B,TypeId,... )
     end
 end
 
-Addon.APP:RegisterEvent( 'ADDON_LOADED' );
-Addon.APP:SetScript( 'OnEvent',function( self,Event,AddonName )
-    if( AddonName ~= 'jChat' ) then return end;
-    
-    Addon.DB:Init();
-
-    Addon.QUESTS:Init();
-
-    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-        Addon.FRAMES:Notify( 'Prepping. Please wait...' );
+function APP:OnEnable()
+    for Name,Module in self:IterateModules() do
+    	self:EnableModule( Name )
     end
 
-    Addon.CHAT:Init();
-
-    Addon.CONFIG:Init();
-
-    if( Addon.CONFIG:GetValue( 'Debug' ) ) then
-        Addon.FRAMES:Notify( 'Done' );
+    if( Frame ) then
+        CHATFRAME.Hooks[ Frame ] = Frame.AddMessage
+        Frame.AddMessage = APP.AddMessage
     end
-end );
+
+    CHATFRAME:Refresh()
+end
