@@ -516,19 +516,19 @@ function CONFIG:Refresh()
 				width = 'full',
 				args = self:WindowOps()
 			},
-			FilterOptions = {
-				order = 2,
-				name = 'Filter Options',
-				type = 'group',
-				width = 'full',
-				args = self:FilterOps()
-			},
 			FormattingOptions = {
-				order = 3,
+				order = 2,
 				name = 'Format Options',
 				type = 'group',
 				width = 'full',
 				args = self:FormatOps()
+			},
+			FilterOptions = {
+				order = 3,
+				name = 'Filter Options',
+				type = 'group',
+				width = 'full',
+				args = self:FilterOps()
 			},
 			QuestOptions = {
 				order = 4,

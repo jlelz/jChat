@@ -52,7 +52,7 @@ function APP:PrependTimeStamp( MessageText )
     return MessageText
 end
 
-function APP.AddMessage( self,MessageText,R,G,B,TypeId,... )
+function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     local MyName = UnitName( 'player' )
     local ChatType = select( 3,... ) or ''
     local WhisperTypeInfo = ChatTypeInfo['WHISPER']
@@ -335,9 +335,13 @@ function APP:OnEnable()
     	self:EnableModule( Name )
     end
 
-    if( Frame ) then
-        CHATFRAME.Hooks[ Frame ] = Frame.AddMessage
-        Frame.AddMessage = APP.AddMessage
+    for i = 1, 10 do
+        local Frame = _G[ 'ChatFrame'..i ]
+
+        if( Frame ) then
+            CHATFRAME.Hooks[ Frame ] = Frame.AddMessage
+            Frame.AddMessage = APP.AddMessage
+        end
     end
 
     CHATFRAME:Refresh()
