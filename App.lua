@@ -61,9 +61,6 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     if( issecretvalue( MessageText ) ) then
         CannotProcess = true
     end
-    if( InCombatLockdown() ) then
-        CannotProcess = true
-    end
     if( C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() ) then
         CannotProcess = true
     end
