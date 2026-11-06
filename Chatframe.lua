@@ -332,9 +332,7 @@ function CHATFRAME:RegisterCallbacks()
                     Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags )
                 end
 
-                if( Frame.RefreshLayout ) then
-                    Frame:RefreshLayout()
-                end
+                CHATFRAME:RefreshLayout()
             end
         end
 
@@ -393,6 +391,18 @@ function CHATFRAME:RegisterCallbacks()
     end );
 end
 
+function CHATFRAME:RefreshLayout()
+    for i = 1, 10 do
+        local Frame = _G[ 'ChatFrame'..i ];
+
+        if( Frame ) then
+            if( Frame.RefreshLayout ) then
+                Frame:RefreshLayout();
+            end
+        end
+    end
+end
+
 function CHATFRAME:RefreshFont()
     for i = 1, 10 do
         local Frame = _G[ 'ChatFrame'..i ];
@@ -402,10 +412,6 @@ function CHATFRAME:RefreshFont()
             C_Timer.After(0, function()
                 if( DB.FONTS[ Font.Family ] ) then
                     Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-                end
-
-                if( Frame.RefreshLayout ) then
-                    Frame:RefreshLayout();
                 end
             end )
         end
@@ -419,7 +425,7 @@ function CHATFRAME:RefreshFade()
 
         if( Fade ~= nil ) then
             C_Timer.After(0, function()
-                if( Frame and Fade ) then
+                if( Frame and Fade ~= nil ) then
                     Frame:SetFading( Fade );
                 end
             end )
@@ -448,6 +454,7 @@ function CHATFRAME:Refresh()
     self:RefreshFont()
     self:RefreshFade()
     self:RefreshScroll()
+    self:RefreshLayout()
 end
 
 function CHATFRAME:OnEnable()
