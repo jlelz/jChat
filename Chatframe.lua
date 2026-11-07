@@ -195,15 +195,6 @@ function CHATFRAME:RefreshChannels()
         end
         FrameChannelNames[ ChannelData.Name ] = ChannelData.Name
     end
-
-    for _,ChannelData in pairs( DBChannels ) do
-        if( not Library:InArray( ChannelData.Name,FrameChannelNames ) ) then
-            DBChannels[ ChannelData.Name ] = nil
-            if( DB:GetDBValue( 'Debug' ) ) then
-                Library.FRAMES:Debug( 'Purged from DB',ChannelData.Name )
-            end
-        end
-    end
 end
 
 --
