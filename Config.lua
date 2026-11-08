@@ -558,6 +558,7 @@ function CONFIG:Refresh()
 				width = 'full',
 				args = self:DebugOps()
 			},
+            profiles = LibStub( 'AceDBOptions-3.0' ):GetOptionsTable( DB.db ),
 		},
 	};
 
