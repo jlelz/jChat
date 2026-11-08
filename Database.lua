@@ -191,7 +191,7 @@ function DB:OnEnable()
                 ERRORS = true,
                 IGNORED = true,
             },
-            BypassTypes = true,
+            BypassPerms = true,
             showTimestamps = 'none',
             TimeColor = {
                 143/255,

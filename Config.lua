@@ -177,10 +177,7 @@ function CONFIG:WindowOps()
                     if( Frame and DB:GetPersistence().Font[ Info.arg ] ~= nil ) then
                         DB:GetPersistence().Font[ Info.arg ] = Value
 
-                        local Font = DB:GetDBValue( 'Font' )
-                        if( DB.FONTS[ Font.Family ] ) then
-                            Frame:SetFont( DB.FONTS[ Font.Family ],Font.Size,Font.Flags )
-                        end
+                        CHATFRAME:Refresh()
 
                         if( Frame.RefreshLayout ) then
                             Frame:RefreshLayout()
@@ -211,14 +208,10 @@ function CONFIG:WindowOps()
 	            for i = 1, 10 do
 	                local Frame = _G[ 'ChatFrame'..i ]
 	                if( Frame ) then
-		                if( Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
 		                    DB:GetPersistence()[ Info.arg ] = Value
 
-		                    Frame:SetMaxLines( 10000 )
-		                elseif( not Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
-		                    DB:GetPersistence()[ Info.arg ] = Value
-
-		                    Frame:SetMaxLines( 128 )
+		                    CHATFRAME:Refresh()
 		                end
 		            end
 	            end
@@ -234,14 +227,10 @@ function CONFIG:WindowOps()
 	            for i = 1, 10 do
 	                local Frame = _G[ 'ChatFrame'..i ];
 	                if( Frame ) then
-		                if( Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
+		                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
 		                    DB:GetPersistence()[ Info.arg ] = Value
 
-		                    Frame:SetFading( true );
-		                elseif( not Value and DB:GetPersistence()[ Info.arg ] ~= nil ) then
-		                    DB:GetPersistence()[ Info.arg ] = Value
-
-		                    Frame:SetFading( false );
+		                    CHATFRAME:Refresh()
 		                end
 		            end
 	            end
@@ -251,7 +240,7 @@ function CONFIG:WindowOps()
 end
 
 function CONFIG:FilterOps()
-	return {
+	local Options = {
         FirstSeparator = {
             type = 'header',
             order = 0,
@@ -333,143 +322,165 @@ function CONFIG:FilterOps()
             width = 'normal',
             multiline = false,
         },
+        ThirdSeparator = {
+            type = 'header',
+            order = 7,
+            name = 'PERMISSIONS',
+        },
 	}
+
+    local Order = 8
+    for _,Channel in pairs( DB:GetPersistence().Channels ) do
+        if( Channel and Channel.Name ) then
+            Options[ Channel.Name..'Perm' ] = {
+                type = 'toggle',
+                order = Order,
+                get = function( Info )
+                    return DB:GetPersistence().Channels[ Info.arg ].Allowed
+                end,
+                set = function( Info,Value )
+                    DB:GetPersistence().Channels[ Info.arg ].Allowed = Value
+                end,
+                name = '[['..Channel.Id..']'..Channel.Name..']',
+                desc = 'Toggle '..Channel.Name..' messages on/off',
+                arg = Channel.Name,
+            }
+            Order = Order+1
+        end
+    end
+    Order = Order+1
+    Options.FourthSeparator = {
+        type = 'header',
+        order = Order,
+        name = 'OVERRIDE',
+    }
+    Order = Order+1
+    Options.BypassPerms = {
+        type = 'toggle',
+        order = Order,
+        name = 'Bypass',
+        desc = 'Allow disabled channels to still alert when mentions occur or they are alerting',
+        arg = 'BypassPerms',
+    }
+    return Options
 end
 
 function CONFIG:FormatOps()
-	local Order = 1
-	local ChannelPrefs = {
+    local Options = {
         FirstSeparator = {
             type = 'header',
             order = 0,
-            name = 'COLORS',
+            name = 'TIMESTAMPS',
         },
-	}
-	for _,Channel in pairs( self:GetChannels() ) do 
-		if( Channel.Name ) then
-			Order = Order+1
-            ChannelPrefs[ Channel.Name..'Color' ] = {
+        TimeStamps = {
+            type = 'select',
+            order = 1,
+            values = {
+                none = 'none',
+                hour_min_12 = 'hour_min_12',
+                hour_min_ext = 'hour_min_ext',
+                hour_min_sec_12_ext = 'hour_min_sec_12_ext',
+                hour_min_24 = 'hour_min_24',
+                hour_min_sec_24 = 'hour_min_sec_24',
+            },
+            name = 'Timestamps',
+            desc = 'Timestamp format',
+            arg = 'showTimestamps',
+        },
+        TimeColor = {
+            type = 'color',
+            order = 2,
+            get = function( Info )
+                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    return unpack( DB:GetPersistence()[ Info.arg ] );
+                end
+            end,
+            set = function( Info,R,G,B,A )
+                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
+                end
+            end,
+            name = 'Timestamps',
+            desc = 'Timestamp Color',
+            arg = 'TimeColor',
+            --hasAlpha = true,
+        },
+        SecondSeparator = {
+            type = 'header',
+            order = 3,
+            name = 'TOGGLES',
+        },
+        ShortNames = {
+            type = 'toggle',
+            order = 4,
+            name = 'Short Channel Names',
+            desc = 'For channels with long names, shorten them with abbreviation',
+            arg = 'ShortChannelNames',
+        },
+        Links = {
+            type = 'toggle',
+            order = 5,
+            name = 'Links',
+            desc = 'Automatically convert links to clickable',
+            arg = 'LinksEnabled',
+        },
+        ClassColors = {
+            type = 'toggle',
+            order = 6,
+            get = function( Info )
+                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    return DB:GetPersistence()[ Info.arg ]
+                end
+            end,
+            set = function( Info,Value )
+                if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
+                    DB:GetPersistence()[ Info.arg ] = Value
+
+                    for i,ChannelData in pairs( CHATFRAME:GetChannels() ) do
+                        if( ChannelData.Id ) then
+                            ToggleChatColorNamesByClassGroup( Value,tostring( 'CHANNEL'..ChannelData.Id ) );
+                        end
+                    end
+                end
+            end,
+            name = 'Class Colors',
+            desc = 'Enable/Disable Chat Class Colors',
+            arg = 'ClassColors',
+        },
+    }
+    Options.ThirdSeparator = {
+        type = 'header',
+        order = 7,
+        name = 'COLORS',
+    }
+    local Order = 8
+    for _,Channel in pairs( DB:GetPersistence().Channels ) do
+        if( Channel and Channel.Name ) then
+            Options[ Channel.Name..'Color' ] = {
                 type = 'color',
                 order = Order,
                 get = function( Info )
-                    if( DB:GetPersistence().Channels[ Info.arg ] and not DB:GetPersistence().Channels[ Info.arg ].Color ) then
-                        DB:GetPersistence().Channels[ Info.arg ].Color = CHATFRAME:GetBaseColor()
+                    if( DB:GetPersistence().Channels[ Info.arg ].Color ) then
+                        return unpack( DB:GetPersistence().Channels[ Info.arg ].Color )
+                    else
+                        return unpack( CHATFRAME:GetBaseColor() )
                     end
-                    return unpack( DB:GetPersistence().Channels[ Info.arg ].Color )
                 end,
                 set = function( Info,R,G,B,A )
-                    local InternalCall = true;
-                    if( DB:GetPersistence().Channels[ Info.arg ] ~= nil ) then
+                    -- Change color
+                    DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A }
 
-                        -- Change color
-                        DB:GetPersistence().Channels[ Info.arg ].Color = { R,G,B,A }
-
-                        -- Apply to Chat
-                        CHATFRAME:ApplyChatColors()
-                        
-                    end
+                    -- Apply to Chat
+                    CHATFRAME:ApplyChatColors()
                 end,
                 name = '[['..Channel.Id..']'..Channel.Name..']',
                 desc = 'Set the color of '..Channel.Name..' chat',
                 arg = Channel.Name,
-                --hasAlpha = true,
             }
-		end
-	end
-
-	Order = Order+1
-    ChannelPrefs.SecondSeparator = {
-        type = 'header',
-        order = Order,
-        name = 'TIMESTAMPS',
-    }
-	Order = Order+1
-	ChannelPrefs.TimeStamps = {
-        type = 'select',
-        values = {
-            none = 'none',
-            hour_min_12 = 'hour_min_12',
-            hour_min_ext = 'hour_min_ext',
-            hour_min_sec_12_ext = 'hour_min_sec_12_ext',
-            hour_min_24 = 'hour_min_24',
-            hour_min_sec_24 = 'hour_min_sec_24',
-        },
-        order = Order,
-        name = 'Timestamps',
-        desc = 'Timestamp format',
-        arg = 'showTimestamps',
-    }
-
-	Order = Order+1
-	ChannelPrefs.TimeColor = {
-        type = 'color',
-        order = Order,
-        get = function( Info )
-            if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                return unpack( DB:GetPersistence()[ Info.arg ] );
-            end
-        end,
-        set = function( Info,R,G,B,A )
-            if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
-                DB:GetPersistence()[ Info.arg ] = { R,G,B,A };
-            end
-        end,
-        name = 'Timestamps',
-        desc = 'Timestamp Color',
-        arg = 'TimeColor',
-        --hasAlpha = true,
-    }
-
-	Order = Order+1
-    ChannelPrefs.ThirdSeparator = {
-        type = 'header',
-        order = Order,
-        name = 'TOGGLES',
-    }
-
-	Order = Order+1
-	ChannelPrefs.ShortNames = {
-        type = 'toggle',
-        order = Order,
-        name = 'Short Channel Names',
-        desc = 'For channels with long names, shorten them with abbreviation',
-        arg = 'ShortChannelNames',
-	}
-
-	Order = Order+1
-	ChannelPrefs.Links = {
-        type = 'toggle',
-        order = Order,
-        name = 'Links',
-        desc = 'Automatically convert links to clickable',
-        arg = 'LinksEnabled',
-	}
-
-	Order = Order+1
-	ChannelPrefs.ClassColors = {
-        type = 'toggle',
-        order = Order,
-		get = function( Info )
-		    if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
-		        return DB:GetPersistence()[ Info.arg ]
-		    end
-		end,
-        set = function( Info,Value )
-        	if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
-            	DB:GetPersistence()[ Info.arg ] = Value
-
-	            for i,ChannelData in pairs( CHATFRAME:GetChannels() ) do
-	                if( ChannelData.Id ) then
-	                    ToggleChatColorNamesByClassGroup( Value,tostring( 'CHANNEL'..ChannelData.Id ) );
-	                end
-	            end
-            end
-        end,
-        name = 'Class Colors',
-        desc = 'Enable/Disable Chat Class Colors',
-        arg = 'ClassColors',
-	}
-	return ChannelPrefs
+            Order = Order+1
+        end
+    end
+    return Options
 end
 
 function CONFIG:QuestOps()
@@ -482,10 +493,10 @@ function CONFIG:QuestOps()
 		Quests = {
 	        type = 'toggle',
 	        order = 1,
-	        name = 'Quests',
+	        name = 'Enabled',
 	        desc = 'Enable/disable alerting if anyone mentions a quest you are on',
 	        arg = 'QuestAlert',
-		}
+		},
 	}
 end
 

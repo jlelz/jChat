@@ -191,7 +191,7 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
 
     -- Override for Monitored Messages
     if( Watched or Mentioned ) then
-        if( DB:GetDBValue( 'BypassTypes' ) ) then
+        if( DB:GetDBValue( 'BypassPerms' ) ) then
             Ignored = false
         end
     end
