@@ -196,13 +196,13 @@ function CONFIG:WindowOps()
         SecondSeparator = {
             type = 'header',
             order = 4,
-            name = 'TOGGLES',
+            name = 'BEHAVIORS',
         },
     	ScrollBack = {
 			order = 5,
 	        type = 'toggle',
 	        name = 'Scroll Back',
-	        desc = 'Extend chat history to 10,000 lines',
+	        desc = 'Enable/Disable Chat Extended History',
 	        arg = 'ScrollBack',
 	        set = function( Info,Value )
 	            for i = 1, 10 do
@@ -221,7 +221,7 @@ function CONFIG:WindowOps()
 			order = 6,
 	        type = 'toggle',
 	        name = 'Fade Out',
-	        desc = 'Enable/disable chat fading',
+	        desc = 'Enable/Disable Chat Fading',
 	        arg = 'FadeOut',
 	        set = function( Info,Value )
 	            for i = 1, 10 do
@@ -303,7 +303,7 @@ function CONFIG:FilterOps()
             type = 'toggle',
             order = 5,
             name = 'Personal Mention Alert',
-            desc = 'Enable/disable alerting if anyone mentions your name. Note that mentions always produce an alert sound and have the whisper color',
+            desc = 'Enable/Disable Chat Personal Mentions',
             arg = 'MentionAlert',
         },
         AliasList = {
@@ -322,14 +322,21 @@ function CONFIG:FilterOps()
             width = 'normal',
             multiline = false,
         },
+        Quests = {
+            type = 'toggle',
+            order = 7,
+            name = 'Quest Alert',
+            desc = 'Enable/Disable Chat Quest Alerts',
+            arg = 'QuestAlert',
+        },
         ThirdSeparator = {
             type = 'header',
-            order = 7,
+            order = 8,
             name = 'PERMISSIONS',
         },
 	}
 
-    local Order = 8
+    local Order = 9
     for _,Channel in pairs( DB:GetPersistence().Channels ) do
         if( Channel and Channel.Name ) then
             Options[ Channel.Name..'Perm' ] = {
@@ -342,7 +349,7 @@ function CONFIG:FilterOps()
                     DB:GetPersistence().Channels[ Info.arg ].Allowed = Value
                 end,
                 name = '[['..Channel.Id..']'..Channel.Name..']',
-                desc = 'Toggle '..Channel.Name..' messages on/off',
+                desc = 'Enable/Disable '..Channel.Name..' messages',
                 arg = Channel.Name,
             }
             Order = Order+1
@@ -352,14 +359,14 @@ function CONFIG:FilterOps()
     Options.FourthSeparator = {
         type = 'header',
         order = Order,
-        name = 'OVERRIDE',
+        name = 'BEHAVIORS',
     }
     Order = Order+1
     Options.BypassPerms = {
         type = 'toggle',
         order = Order,
         name = 'Bypass',
-        desc = 'Allow disabled channels to still alert when mentions occur or they are alerting',
+        desc = 'Enable/Disable Chat Channel Alerts While Disabled',
         arg = 'BypassPerms',
     }
     return Options
@@ -405,28 +412,9 @@ function CONFIG:FormatOps()
             arg = 'TimeColor',
             --hasAlpha = true,
         },
-        SecondSeparator = {
-            type = 'header',
-            order = 3,
-            name = 'TOGGLES',
-        },
-        ShortNames = {
-            type = 'toggle',
-            order = 4,
-            name = 'Short Channel Names',
-            desc = 'For channels with long names, shorten them with abbreviation',
-            arg = 'ShortChannelNames',
-        },
-        Links = {
-            type = 'toggle',
-            order = 5,
-            name = 'Links',
-            desc = 'Automatically convert links to clickable',
-            arg = 'LinksEnabled',
-        },
         ClassColors = {
             type = 'toggle',
-            order = 6,
+            order = 3,
             get = function( Info )
                 if( DB:GetPersistence()[ Info.arg ] ~= nil ) then
                     return DB:GetPersistence()[ Info.arg ]
@@ -480,24 +468,29 @@ function CONFIG:FormatOps()
             Order = Order+1
         end
     end
+    Order = Order+1
+    Options.FourthSeparator = {
+        type = 'header',
+        order = Order,
+        name = 'BEHAVIORS',
+    }
+    Order = Order+1
+    Options.ShortNames = {
+        type = 'toggle',
+        order = Order,
+        name = 'Short Channel Names',
+        desc = 'Enable/Disable Chat Short Channel Names',
+        arg = 'ShortChannelNames',
+    }
+    Order = Order+1
+    Options.Links = {
+        type = 'toggle',
+        order = Order,
+        name = 'Links',
+        desc = 'Enable/Disable Hyperlinks',
+        arg = 'LinksEnabled',
+    }
     return Options
-end
-
-function CONFIG:QuestOps()
-	return {
-        FirstSeparator = {
-            type = 'header',
-            order = 0,
-            name = 'QUESTS',
-        },
-		Quests = {
-	        type = 'toggle',
-	        order = 1,
-	        name = 'Enabled',
-	        desc = 'Enable/disable alerting if anyone mentions a quest you are on',
-	        arg = 'QuestAlert',
-		},
-	}
 end
 
 function CONFIG:DebugOps()
@@ -505,13 +498,13 @@ function CONFIG:DebugOps()
         FirstSeparator = {
             type = 'header',
             order = 0,
-            name = 'DEBUG',
+            name = 'BEHAVIORS',
         },
 		Debug = {
 	        type = 'toggle',
 	        order = 1,
-	        name = 'Enabled',
-	        desc = 'Enable/disable debug',
+	        name = 'Debug Enabled',
+	        desc = 'Enable/Disable Debug Messages',
 	        arg = 'Debug',
 		}
 	}
@@ -557,13 +550,6 @@ function CONFIG:Refresh()
 				type = 'group',
 				width = 'full',
 				args = self:FilterOps()
-			},
-			QuestOptions = {
-				order = 4,
-				name = 'Quests',
-				type = 'group',
-				width = 'full',
-				args = self:QuestOps()
 			},
 			DebugOptions = {
 				order = 5,

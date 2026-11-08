@@ -328,6 +328,15 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     end
 end
 
+function APP:ListChannels()
+    if( not DB:GetDBValue( 'Debug' ) ) then return end
+    local DBChannels = DB:GetPersistence().Channels
+
+    for _,Channel in pairs( DBChannels ) do
+        Library.FRAMES:Notify( 'You have joined',CHATFRAME:GetChannelLink( Channel.Id,Channel.Name ) )
+    end
+end
+
 function APP:OnEnable()
     for Name,Module in self:IterateModules() do
     	self:EnableModule( Name )
@@ -343,4 +352,6 @@ function APP:OnEnable()
     end
 
     CHATFRAME:Refresh()
+
+    self:ListChannels()
 end

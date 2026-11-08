@@ -266,7 +266,7 @@ function CHATFRAME:RegisterCallbacks()
 
         for i,v in pairs( DBChannels ) do
             if( v and v.Id and ChannelId == v.Id ) then
-                if( v.Name ) then
+                if( v.Name and DBChannels[ v.Name ].Color ) then
                     self:SetTextColor( unpack( DBChannels[ v.Name ].Color ) );
                 end
             end
