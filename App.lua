@@ -151,7 +151,7 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     if( #WatchedMessages > 0 ) then
         for _,WatchedMessage in pairs( WatchedMessages ) do
             if( Library:Minify( TextToFilter ):find( Library:Minify( WatchedMessage ) ) ) then
-                Watched = '|Alert:'..WatchedMessage
+                Watched = ' |Alert:'..WatchedMessage
             end
         end
     end
@@ -159,7 +159,7 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     if( DB:GetDBValue( 'QuestAlert' ) ) then
         for _,ActiveQuest in pairs( QUESTS.ActiveQuests ) do
             if( Library:Minify( TextToFilter ):find( ActiveQuest ) ) then
-                Watched = '|Quest:'..ActiveQuest
+                Watched = ' |Quest:'..ActiveQuest
             end
         end
     end
@@ -173,14 +173,14 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     end
     if( DB:GetDBValue( 'MentionAlert' ) ) then
         if( Library:Minify( TextToFilter ):find( Library:Minify( MyName ) ) ) then
-            Mentioned = '|Mentioned:'..MyName
+            Mentioned = ' |Mentioned:'..MyName
         end
     end
     local AliasList = DB:GetAliasList()
     if( #AliasList > 0 ) then
         for _,Alias in pairs( AliasList ) do
             if( Library:Minify( TextToFilter ):find( Library:Minify( Alias ) ) ) then
-                Mentioned = '|Mentioned:'..Alias
+                Mentioned = ' |Mentioned:'..Alias
             end
         end
     end
