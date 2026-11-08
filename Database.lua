@@ -3,6 +3,10 @@ local _,Library = ...;
 local ADDON = LibStub( 'AceAddon-3.0' ):NewAddon( 'jChat' )
 local DB = ADDON:NewModule( 'database' )
 
+local Theme = Library.Theme
+local Text = Theme.Text
+local Colors = Text.Colors
+
 function DB:SetDBValue( Index,Value )
     if( self:GetPersistence()[ Index ] ~= nil ) then
         self:GetPersistence()[ Index ] = Value;
@@ -158,11 +162,11 @@ function DB:OnEnable()
                 191/255,
                 1,
             },
-            AlertColor = {
-                224/255,
-                157/255,
-                240/255,
-                1,
+            AlertColor = { 
+                Colors.Highlight.r,
+                Colors.Highlight.g,
+                Colors.Highlight.b,
+                Colors.Highlight.a 
             },
             AlertChannel = 'SFX',
             AlertVolume = .5,
