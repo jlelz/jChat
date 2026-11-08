@@ -140,13 +140,13 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     end
 
     -- Watch Check
+    local Watched,Mentioned = false,false
     local function GetWatched()
         return Watched
     end
     local function SetWatched( Word )
         Watched = Word
     end
-    local Watched,Mentioned = false,false
     local WatchedMessages = DB:GetAlerts()
     if( #WatchedMessages > 0 ) then
         for _,WatchedMessage in pairs( WatchedMessages ) do
@@ -163,6 +163,7 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
             end
         end
     end
+    SetWatched( Watched )
 
     -- Mention Check
     local function GetMentioned()
