@@ -1,7 +1,8 @@
 ## Title: |cff009bffj|cffffffffChat|r
 ## Notes: j's Chat Filter mod
 ## Version: @project-version@
-## X-Category: system
+## Category: Chat & Communication
+
 
 ## Author: jlelz
 ## X-Realm: Moonguard/Grobbulus/Whitemane
