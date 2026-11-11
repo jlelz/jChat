@@ -330,9 +330,9 @@ end
 
 function APP:ListChannels()
     if( not DB:GetDBValue( 'Debug' ) ) then return end
-    local DBChannels = DB:GetPersistence().Channels
+    local FrameChannels = CHATFRAME:GetChannels()
 
-    for _,Channel in pairs( DBChannels ) do
+    for _,Channel in pairs( FrameChannels ) do
         Library.FRAMES:Notify( 'You have joined',CHATFRAME:GetChannelLink( Channel.Id,Channel.Name ) )
     end
 end
