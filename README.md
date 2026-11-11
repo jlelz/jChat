@@ -20,20 +20,14 @@ https://github.com/jlelz/jChat/issues
 
 ## Screenshots
 <p float="center">
-  <img src="https://i.imgur.com/oU0cEgG.png" width="500" />
+  <img src="https://github.com/jlelz/screens/blob/main/wow/jChat/1.png?raw=true" width="500" />
 </p>
 <p float="center">
-  <img src="https://i.imgur.com/Mw9aL1T.png" width="500" />
+  <img src="https://github.com/jlelz/screens/blob/main/wow/jChat/2.png?raw=true" width="500" />
 </p>
 <p float="center">
-  <img src="https://i.imgur.com/iqF9gyG.png" width="500" />
+  <img src="https://github.com/jlelz/screens/blob/main/wow/jChat/3.png?raw=true" width="500" />
 </p>
 <p float="center">
-  <img src="https://i.imgur.com/VDFfqqM.png" width="500" />
-</p>
-<p float="center">
-  <img src="https://i.imgur.com/dcMSOIF.png" width="500" />
-</p>
-<p float="center">
-  <img src="https://i.imgur.com/zGUZ7Gx.png" width="500" />
+  <img src="https://github.com/jlelz/screens/blob/main/wow/jChat/4.png?raw=true" width="500" />
 </p>
