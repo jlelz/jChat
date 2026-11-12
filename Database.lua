@@ -126,6 +126,7 @@ end
 function DB:OnEnable()
     local Defaults = {
         global = {
+            Channels = {},
             Font = {
                 Family = 'FRIZQT__',
                 Size = 14,
@@ -138,28 +139,32 @@ function DB:OnEnable()
                         a = 1,
                     },
                     Offset = {
-                        x = 0,
-                        y = -0,
+                        x = 1,
+                        y = -1,
                     },
                 },
             },
+            LinksEnabled = true,
+            ShortChannelNames = true;
+            BypassPerms = true,
+            ClassColors = true,
+            AutoInvite = true,
+            ScrollBack = true,
             FadeOut = false,
             IgnoreList = {
                 'boost',
             },
-            MentionAlert = true,
-            MentionDrop = {
+            AlertList = {
             },
-            MentionMove = 0,
-            MentionAlpha = .5,
             AliasList = {
             },
-            ScrollBack = true,
+            MentionAlert = true,
             QuestAlert = true,
-            ChannelColor = {
-                254/255,
-                191/255,
-                191/255,
+            ShowTimestamps = 'none',
+            TimeColor = {
+                143/255,
+                140/255,
+                143/255,
                 1,
             },
             AlertColor = { 
@@ -170,42 +175,6 @@ function DB:OnEnable()
             },
             AlertChannel = 'SFX',
             AlertVolume = .5,
-            AlertList = {
-            },
-            LinksEnabled = true,
-            Channels = {},
-            ShortChannelNames = true;
-            ChatGroups = {
-                BATTLEGROUND = true,
-                TRADESKILLS = false,
-                SAY = true,
-                EMOTE = true,
-                YELL = true,
-                GUILD = true,
-                WHISPER = true,
-                BN = true,
-                PARTY = true,
-                RAID = true,
-                COMBAT = true,
-                SKILL = true,
-                LOOT = true,
-                MONEY = true,
-                OPENING = true,
-                PET = false,
-                ERRORS = true,
-                IGNORED = true,
-            },
-            BypassPerms = true,
-            showTimestamps = 'none',
-            TimeColor = {
-                143/255,
-                140/255,
-                143/255,
-                1,
-            },
-            ClassColors = true,
-            AutoInvite = true,
-            RespectLocks = true,
             Debug = false,
         },
     };

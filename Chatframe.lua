@@ -226,7 +226,7 @@ function CHATFRAME:RegisterCallbacks()
                 ToggleChatColorNamesByClassGroup( DB:GetPersistence().ClassColors,tostring( 'CHANNEL'..ChannelId ) );
             end
             if( DB:GetDBValue( 'Debug' ) ) then
-                Library:Dump( DB:GetPersistence().Channels[ ChannelName ] )
+                Library.FRAMES:Debug( 'Added to DB',ChannelName )
             end
         end
     end )
@@ -237,7 +237,7 @@ function CHATFRAME:RegisterCallbacks()
             if( DB:GetPersistence().Channels[ ChannelName ] ) then
                 DB:GetPersistence().Channels[ ChannelName ] = nil;
                 if( DB:GetDBValue( 'Debug' ) ) then
-                    Library.FRAMES:Debug( 'Purged from DB',ChannelName )
+                    Library.FRAMES:Debug( 'Removed from DB',ChannelName )
                 end
             end
         end
@@ -245,7 +245,7 @@ function CHATFRAME:RegisterCallbacks()
 
     self:SecureHook( 'SetItemRef',function( Pattern,FullText )
         local linkType,addon,param1 = strsplit( ':',Pattern );
-        if( linkType == 'addon' and addon == 'jChat' ) then
+        if( linkType == 'addon' and addon == ADDON:GetName() ) then
             if( param1 == 'url' ) then
                 local Frame = _G[ 'ChatFrame'..1 ];
                 if( Frame ) then
@@ -271,17 +271,6 @@ function CHATFRAME:RegisterCallbacks()
                 end
             end
         end
-    end );
-
-    self:SecureHook( 'FCF_SetChatWindowFontSize',function( self,Frame,FontSize )
-        local Font = DB:GetDBValue( 'Font' );
-        C_Timer.After(0, function()
-            if( DB.FONTS[ Font.Family ] ) then
-                Frame:SetFont( Addon.DB.FONTS[ Font.Family ],Font.Size,Font.Flags );
-            end
-            Frame:SetShadowColor( Font.Shadow.Color.r,Font.Shadow.Color.g,Font.Shadow.Color.b,Font.Shadow.Color.a );
-            Frame:SetShadowOffset( Font.Shadow.Offset.x,Font.Shadow.Offset.x );
-        end );
     end );
 
     self:SecureHook( 'FCF_CopyChatSettings',function( NewFrame,ExistingFrame )
@@ -366,18 +355,11 @@ function CHATFRAME:RegisterCallbacks()
                 DB:GetPersistence().Channels[ ChannelName ].Color = R,G,B;
             end
         end
+        self:ApplyChatColors()
     end );
     self:SecureHook( 'ToggleChatColorNamesByClassGroup',function( Checked,Group,Internal )
         if( not Internal ) then
             -- We don't care
-        end
-    end );
-
-    self:SecureHook( 'ToggleChatMessageGroup',function( Checked,Group )
-        if( ChatFrame_ContainsMessageGroup and ChatFrame_ContainsMessageGroup( ChatFrame,Group ) ~= nil ) then
-            if( DB:GetPersistence().ChatGroups[ Group ] ~= nil ) then
-                DB:GetPersistence().ChatGroups[ Group ] = Checked;
-            end
         end
     end );
 end
@@ -453,4 +435,6 @@ function CHATFRAME:OnEnable()
     self:RefreshChannels()
     self:ApplyChatColors()
     self:RegisterCallbacks()
+
+    self:Refresh()
 end

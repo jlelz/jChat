@@ -30,7 +30,7 @@ function APP:PrependTimeStamp( MessageText )
     }
 
     -- Timestamp Format
-    local SelectedKey = DB:GetDBValue( 'showTimestamps' )
+    local SelectedKey = DB:GetDBValue( 'ShowTimestamps' )
     local FmtString = PossibleTimestampFmts[ SelectedKey ] or 'none'
 
     -- Timestamp Color
@@ -210,7 +210,7 @@ function APP:AddMessage( MessageText,R,G,B,TypeId,... )
     end
     if( DB:GetDBValue( 'LinksEnabled' ) ) then
         local Color = 'ffffff'
-        local ALink = '|cff'..Color..'|Haddon:jChat:url|h[>%1$s<]|h|r'
+        local ALink = '|cff'..Color..'|Haddon:'..ADDON:GetName()..':url|h[>%1$s<]|h|r'
         if( strlen( TextToFilter ) > 7 ) then
             local Patterns = GetURLPatterns()
             for i = 1, #Patterns do
@@ -330,10 +330,16 @@ end
 
 function APP:ListChannels()
     if( not DB:GetDBValue( 'Debug' ) ) then return end
-    local FrameChannels = CHATFRAME:GetChannels()
+    local FrameChannels,DBChannels = CHATFRAME:GetChannels(),DB:GetPersistence().Channels
 
     for _,Channel in pairs( FrameChannels ) do
-        Library.FRAMES:Notify( 'You have joined',CHATFRAME:GetChannelLink( Channel.Id,Channel.Name ) )
+        local ChannelLink = CHATFRAME:GetChannelLink( Channel.Id,Channel.Name )
+
+        local ChannelData = DBChannels[ Channel.Name ] or nil
+        if( ChannelData and ChannelData.Color ) then
+            ChannelLink = CreateColor( unpack( ChannelData.Color ) ):WrapTextInColorCode( ChannelLink )
+        end
+        Library.FRAMES:Notify( 'You have joined',ChannelLink )
     end
 end
 
@@ -350,8 +356,6 @@ function APP:OnEnable()
             Frame.AddMessage = APP.AddMessage
         end
     end
-
-    CHATFRAME:Refresh()
 
     self:ListChannels()
 end
